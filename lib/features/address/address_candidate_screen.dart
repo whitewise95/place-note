@@ -31,7 +31,9 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   @override
   void initState() {
     super.initState();
-    selected = widget.result.candidates.isEmpty ? null : widget.result.candidates.first;
+    selected = widget.result.candidates.isEmpty
+        ? null
+        : widget.result.candidates.first;
     manualController = TextEditingController();
     useManualInput = widget.result.candidates.isEmpty;
   }

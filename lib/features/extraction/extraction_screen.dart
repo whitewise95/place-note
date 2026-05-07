@@ -4,6 +4,7 @@ import '../../app.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../data/models/extraction_result.dart';
+import '../../data/ocr/mock_ocr_service.dart';
 import '../address/address_candidate_screen.dart';
 import '../report/report_screen.dart';
 
@@ -21,6 +22,8 @@ class ExtractionScreen extends StatefulWidget {
 
 class _ExtractionScreenState extends State<ExtractionScreen> {
   bool hasStarted = false;
+  bool isLoading = true;
+  String? errorMessage;
 
   @override
   void didChangeDependencies() {
@@ -32,6 +35,11 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
   }
 
   Future<void> _extract() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
     final repository = RepositoryScope.of(context);
     try {
       final result = await repository.extractCandidates(widget.imagePath);
@@ -45,20 +53,32 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
       }
 
       await _openNext(result);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('텍스트 인식 중 문제가 발생했습니다. 샘플 데이터로 다시 시도해주세요.')),
-      );
-      Navigator.of(context).pop();
+      setState(() {
+        isLoading = false;
+        errorMessage = '$error';
+      });
     }
   }
 
+  void _startSample() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => const ExtractionScreen(imagePath: MockOcrSource.sample),
+      ),
+    );
+  }
+
   Future<void> _openNext(ExtractionResult result) async {
-    if (result.candidates.length == 1 && result.candidates.first.confidence >= 90) {
+    final canAutoSelect = widget.imagePath == MockOcrSource.sample &&
+        result.candidates.length == 1 &&
+        result.candidates.first.confidence >= 90;
+
+    if (canAutoSelect) {
       final repository = RepositoryScope.of(context);
       final report = await repository.createReport(
         candidate: result.candidates.first,
@@ -92,43 +112,112 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(
-                width: 72,
-                height: 72,
-                child: CircularProgressIndicator(strokeWidth: 7),
-              ),
-              const SizedBox(height: 28),
-              Text(
-                '주소 후보를 찾는 중입니다',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.navy,
-                    ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '현재 MVP는 MockOcrService를 사용합니다.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.muted,
-                    ),
-              ),
-              const SizedBox(height: 18),
-              const StatusPill(
-                label: 'Local processing',
-                color: AppTheme.teal,
-                icon: Icons.offline_bolt_rounded,
-              ),
-              const SizedBox(height: 28),
-              const LinearProgressIndicator(),
-            ],
-          ),
+          child: isLoading
+              ? _LoadingState()
+              : _ErrorState(
+                  message: errorMessage ?? '텍스트 인식에 실패했습니다.',
+                  onRetry: _extract,
+                  onSample: _startSample,
+                ),
         ),
       ),
+    );
+  }
+}
+
+class _LoadingState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(
+          width: 72,
+          height: 72,
+          child: CircularProgressIndicator(strokeWidth: 7),
+        ),
+        const SizedBox(height: 28),
+        Text(
+          '주소 후보를 찾는 중입니다',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: AppTheme.navy,
+              ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'ML Kit OCR로 이미지의 텍스트를 인식합니다.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.muted,
+              ),
+        ),
+        const SizedBox(height: 18),
+        const StatusPill(
+          label: 'On-device OCR',
+          color: AppTheme.teal,
+          icon: Icons.document_scanner_rounded,
+        ),
+        const SizedBox(height: 28),
+        const LinearProgressIndicator(),
+      ],
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({
+    required this.message,
+    required this.onRetry,
+    required this.onSample,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onSample;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.error_outline_rounded, color: AppTheme.amber),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'OCR 실패',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppTheme.navy,
+                fontWeight: FontWeight.w900,
+              ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppTheme.muted, height: 1.45),
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: const Text('다시 시도'),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: onSample,
+          icon: const Icon(Icons.auto_awesome_rounded),
+          label: const Text('샘플로 진행'),
+        ),
+      ],
     );
   }
 }

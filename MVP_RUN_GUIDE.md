@@ -1,6 +1,6 @@
 # MVP 실행 가이드
 
-이 앱은 실제 OCR/서버 없이 Mock 데이터로 동작하는 Flutter Local MVP입니다.
+이 앱은 iOS/Android에서 Google ML Kit OCR로 실제 이미지 텍스트를 인식하고, 서버 없이 로컬에 분석 결과를 저장하는 Flutter Local MVP입니다.
 
 ## 1. 준비
 
@@ -67,7 +67,30 @@ flutter run
 7. `저장된 이력 보기`
 8. 이력 검색, 상세 재진입, 삭제 확인
 
-사진첩/카메라도 진입 UI가 구현되어 있습니다. 실제 OCR은 아직 Mock으로 처리하므로 어떤 이미지를 골라도 샘플 OCR 텍스트가 반환됩니다.
+사진첩/카메라로 주소가 포함된 이미지를 선택하면 iOS/Android에서는 실제 OCR이 실행됩니다. macOS/Web에서는 ML Kit OCR이 지원되지 않으므로 샘플 OCR 텍스트로 fallback됩니다.
+
+## 실제 OCR 테스트 방법
+
+1. iOS 시뮬레이터 또는 실제 iPhone을 준비합니다.
+
+```bash
+open -a Simulator
+flutter devices
+flutter run -d ios
+```
+
+2. 앱에서 `새 분석 시작`을 누릅니다.
+3. `사진첩에서 선택` 또는 `카메라로 촬영`을 누릅니다.
+4. 주소가 선명하게 보이는 부동산 캡쳐 이미지를 선택합니다.
+5. `주소 후보 찾기`를 누릅니다.
+6. OCR 원문과 주소 후보가 표시되는지 확인합니다.
+
+Android에서 테스트하려면 Android Studio와 Android SDK를 설치한 뒤 에뮬레이터 또는 실제 기기를 연결하고 실행합니다.
+
+```bash
+flutter devices
+flutter run -d android
+```
 
 ## 7. 테스트
 

@@ -6,8 +6,8 @@ import '../core/widgets/app_card.dart';
 import '../core/widgets/empty_state.dart';
 import '../core/widgets/section_title.dart';
 import '../core/widgets/status_pill.dart';
-import '../data/mock/mock_ocr_service.dart';
 import '../data/models/research_report.dart';
+import '../data/ocr/mock_ocr_service.dart';
 import 'capture/capture_screen.dart';
 import 'extraction/extraction_screen.dart';
 import 'history/history_screen.dart';
@@ -307,7 +307,8 @@ class _RecentReportTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(color: AppTheme.muted),
         ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.muted),
+        trailing:
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.muted),
       ),
     );
   }

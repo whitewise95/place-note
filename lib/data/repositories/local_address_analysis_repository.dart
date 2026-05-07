@@ -1,25 +1,26 @@
 import '../../core/storage/report_storage.dart';
-import '../mock/mock_ocr_service.dart';
 import '../mock/mock_report_factory.dart';
 import '../models/address_candidate.dart';
 import '../models/extraction_result.dart';
 import '../models/research_report.dart';
+import '../ocr/mlkit_ocr_service.dart';
+import '../ocr/ocr_service.dart';
 import 'address_analysis_repository.dart';
 import 'address_candidate_extractor.dart';
 
 class LocalAddressAnalysisRepository implements AddressAnalysisRepository {
   LocalAddressAnalysisRepository({
-    MockOcrService? ocrService,
+    OcrService? ocrService,
     ReportStorage? storage,
-  })  : _ocrService = ocrService ?? MockOcrService(),
+  })  : _ocrService = ocrService ?? MlKitOcrService(),
         _storage = storage ?? ReportStorage();
 
-  final MockOcrService _ocrService;
+  final OcrService _ocrService;
   final ReportStorage _storage;
 
   @override
   Future<ExtractionResult> extractCandidates(String? imagePath) async {
-    // TODO(server): Spring Boot API 연동 시 POST /v1/address-analyses 로 교체한다.
+    // TODO(server): 서버 OCR 도입 시 POST /v1/address-analyses 로 교체한다.
     final ocrText = await _ocrService.recognize(imagePath);
     final candidates = AddressCandidateExtractor.extract(ocrText);
 

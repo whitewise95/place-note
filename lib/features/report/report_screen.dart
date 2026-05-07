@@ -72,7 +72,8 @@ class _ReportScreenState extends State<ReportScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 32),
           children: [
-            _AddressHeader(report: report, isSaved: isSaved, isSaving: isSaving),
+            _AddressHeader(
+                report: report, isSaved: isSaved, isSaving: isSaving),
             const SizedBox(height: 22),
             const SectionTitle('자료 카드'),
             const SizedBox(height: 10),
@@ -127,7 +128,9 @@ class _AddressHeader extends StatelessWidget {
               StatusPill(
                 label: isSaving ? '저장 중' : (isSaved ? '로컬 저장 완료' : '저장 대기'),
                 color: isSaved ? AppTheme.navy : const Color(0xFFB45309),
-                icon: isSaved ? Icons.check_circle_rounded : Icons.schedule_rounded,
+                icon: isSaved
+                    ? Icons.check_circle_rounded
+                    : Icons.schedule_rounded,
               ),
             ],
           ),

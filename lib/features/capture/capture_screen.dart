@@ -7,7 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/section_title.dart';
 import '../../core/widgets/status_pill.dart';
-import '../../data/mock/mock_ocr_service.dart';
+import '../../data/ocr/mock_ocr_service.dart';
 import '../extraction/extraction_screen.dart';
 
 class CaptureScreen extends StatefulWidget {
@@ -108,7 +108,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     children: [
                       StatusPill(
                         label: imagePath == null ? '선택 대기' : '이미지 준비 완료',
-                        color: imagePath == null ? AppTheme.muted : AppTheme.teal,
+                        color:
+                            imagePath == null ? AppTheme.muted : AppTheme.teal,
                         icon: imagePath == null
                             ? Icons.image_search_rounded
                             : Icons.check_circle_rounded,
@@ -129,21 +130,25 @@ class _CaptureScreenState extends State<CaptureScreen> {
               child: Column(
                 children: [
                   _SourceButton(
-                    onPressed: isPicking ? null : () => _pick(ImageSource.gallery),
+                    onPressed:
+                        isPicking ? null : () => _pick(ImageSource.gallery),
                     icon: Icons.photo_library_rounded,
                     title: '사진첩에서 선택',
                     subtitle: '저장된 매물 캡쳐를 불러옵니다.',
                   ),
                   const Divider(height: 1),
                   _SourceButton(
-                    onPressed: isPicking ? null : () => _pick(ImageSource.camera),
+                    onPressed:
+                        isPicking ? null : () => _pick(ImageSource.camera),
                     icon: Icons.photo_camera_rounded,
                     title: '카메라로 촬영',
                     subtitle: '현장에서 바로 이미지를 촬영합니다.',
                   ),
                   const Divider(height: 1),
                   _SourceButton(
-                    onPressed: isPicking ? null : () => _startWith(MockOcrSource.sample),
+                    onPressed: isPicking
+                        ? null
+                        : () => _startWith(MockOcrSource.sample),
                     icon: Icons.auto_awesome_rounded,
                     title: '샘플 데이터로 시작',
                     subtitle: '이미지 없이 MVP 흐름을 확인합니다.',
@@ -153,7 +158,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
             ),
             const SizedBox(height: 22),
             ElevatedButton.icon(
-              onPressed: imagePath == null || isPicking ? null : () => _startWith(imagePath),
+              onPressed: imagePath == null || isPicking
+                  ? null
+                  : () => _startWith(imagePath),
               icon: const Icon(Icons.text_snippet_rounded),
               label: const Text('주소 후보 찾기'),
             ),

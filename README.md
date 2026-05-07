@@ -6,7 +6,8 @@
 
 - 홈 화면의 새 분석 시작 및 최근 분석 이력
 - 사진첩/카메라 진입 UI
-- Mock OCR 텍스트 인식 흐름
+- iOS/Android Google ML Kit 실제 OCR
+- macOS/Web 및 샘플 흐름용 Mock OCR fallback
 - 주소 후보 자동 추출 및 직접 입력
 - Mock 분석 결과 카드 생성
 - `shared_preferences` 기반 로컬 저장, 조회, 삭제
@@ -49,11 +50,13 @@ flutter test
 ## MVP 데모 흐름
 
 1. 홈에서 `새 분석 시작`
-2. `샘플 데이터로 시작` 또는 사진첩/카메라 선택
-3. Mock OCR 진행 화면
+2. iOS/Android에서 사진첩/카메라 선택
+3. ML Kit OCR 진행 화면
 4. 주소 후보 선택 또는 직접 입력
 5. 분석 결과 저장
 6. 이력 화면에서 검색/삭제/상세 재진입
+
+macOS/Web에서는 ML Kit OCR이 지원되지 않아 샘플 OCR 텍스트로 fallback됩니다. 실제 OCR 테스트는 iOS 또는 Android 기기/시뮬레이터에서 진행하세요.
 
 ## 서버 연동 가이드
 
