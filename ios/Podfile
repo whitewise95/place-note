@@ -54,4 +54,16 @@ post_install do |installer|
       end
     end
   end
+
+  Dir.glob("#{installer.sandbox.root}/Target Support Files/**/*.xcconfig").each do |file|
+    text = File.read(file)
+    text = text.gsub('DT_TOOLCHAIN_DIR', 'TOOLCHAIN_DIR')
+    File.write(file, text)
+  end
+
+  Dir.glob("#{installer.sandbox.root}/Target Support Files/**/*-frameworks.sh").each do |file|
+    text = File.read(file)
+    text = text.gsub('DT_TOOLCHAIN_DIR', 'TOOLCHAIN_DIR')
+    File.write(file, text)
+  end
 end

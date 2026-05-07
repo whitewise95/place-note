@@ -6,7 +6,7 @@
         android:maxSdkVersion="32" />
 
     <application
-        android:label="address_research_mobile"
+        android:label="Place Note"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

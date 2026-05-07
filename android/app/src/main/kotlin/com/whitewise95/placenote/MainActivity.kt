@@ -1,4 +1,4 @@
-package com.example.address_research_mobile
+package com.whitewise95.placenote
 
 import io.flutter.embedding.android.FlutterActivity
 

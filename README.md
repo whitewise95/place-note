@@ -1,4 +1,4 @@
-# Address Research Mobile MVP
+# Place Note MVP
 
 캡쳐 이미지에서 주소 후보를 추출하고, Mock 자료 카드를 만들어 로컬에 저장하는 Flutter MVP입니다.
 
@@ -12,34 +12,37 @@
 - Mock 분석 결과 카드 생성
 - `shared_preferences` 기반 로컬 저장, 조회, 삭제
 - Spring Boot API 교체 지점 `TODO(server):` 주석
+- 실제 iPhone/Android 실행을 위한 앱 ID `com.whitewise95.placenote`
 
 ## 실행 가이드
 
-현재 이 컴퓨터에는 `flutter`/`dart` 명령이 설치되어 있지 않아 Codex가 직접 실행 검증하지는 못했습니다.
-
 더 자세한 단계별 가이드는 `MVP_RUN_GUIDE.md`를 확인하세요.
 
-1. Flutter SDK 설치 후 PATH를 설정합니다.
-   - https://docs.flutter.dev/get-started/install
-
-2. 이 폴더에서 플랫폼 파일을 생성합니다.
+1. 프로젝트 폴더로 이동합니다.
 
 ```bash
 cd "/Users/baeghyeonmyeong/Documents/New project 2"
-flutter create . --project-name address_research_mobile --platforms ios,android
 ```
 
-3. 의존성을 설치합니다.
+2. 준비된 로컬 Flutter/Android 환경을 로드합니다.
 
 ```bash
-flutter pub get
+source scripts/flutter_env.sh
 ```
 
-4. 시뮬레이터나 실제 기기에서 실행합니다.
+3. Android 에뮬레이터 또는 실제 Android 기기에서 실행합니다.
 
 ```bash
-flutter run
+scripts/run_android.sh
 ```
+
+4. 실제 iPhone에서 실행합니다.
+
+```bash
+scripts/run_ios.sh
+```
+
+실제 iPhone은 Xcode에서 Signing Team을 지정하고, iPhone에서 `이 컴퓨터를 신뢰`를 허용해야 `flutter devices`에 표시됩니다.
 
 5. 테스트를 실행합니다.
 
@@ -56,7 +59,9 @@ flutter test
 5. 분석 결과 저장
 6. 이력 화면에서 검색/삭제/상세 재진입
 
-macOS/Web에서는 ML Kit OCR이 지원되지 않아 샘플 OCR 텍스트로 fallback됩니다. 실제 OCR 테스트는 iOS 또는 Android 기기/시뮬레이터에서 진행하세요.
+macOS/Web에서는 ML Kit OCR이 지원되지 않아 샘플 OCR 텍스트로 fallback됩니다. 실제 OCR 테스트는 실제 iPhone 또는 Android 기기/에뮬레이터에서 진행하세요.
+
+참고: 현재 Google ML Kit iOS Pod 일부가 Apple Silicon iOS 26+ 시뮬레이터 arm64를 지원하지 않아 iOS 시뮬레이터 실행은 막힐 수 있습니다. 실제 iPhone 빌드는 `flutter build ios --no-codesign`으로 확인했습니다.
 
 ## 서버 연동 가이드
 

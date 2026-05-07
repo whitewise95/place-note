@@ -4,79 +4,133 @@
 
 ## 1. 준비
 
-현재 Codex 작업 환경에는 Flutter SDK가 설치되어 있지 않았습니다.
-
-먼저 Flutter를 설치합니다.
-
-- Flutter 설치: https://docs.flutter.dev/get-started/install
-- 설치 확인:
+이 Mac에는 Codex 작업용 Flutter/Android 환경을 준비해두었습니다.
 
 ```bash
+cd "/Users/baeghyeonmyeong/Documents/New project 2"
+source scripts/flutter_env.sh
 flutter --version
-flutter doctor
+flutter doctor -v
 ```
 
-`flutter doctor`에서 iOS 또는 Android 개발 환경 경고가 나오면 안내에 따라 Xcode, Android Studio, CocoaPods 등을 설치합니다.
+설치된 주요 경로:
+
+- Flutter SDK: `/Users/baeghyeonmyeong/.codex-flutter/flutter`
+- Android SDK: `/Users/baeghyeonmyeong/Library/Android/sdk`
+- Android AVD: `PlaceNote_API35`
+
+Xcode/CocoaPods도 iOS 빌드가 가능한 상태까지 확인했습니다. 실제 iPhone 실행에는 Apple 개발자 계정 Signing Team 선택이 필요합니다.
 
 ## 2. 프로젝트 폴더로 이동
 
 ```bash
 cd "/Users/baeghyeonmyeong/Documents/New project 2"
+source scripts/flutter_env.sh
 ```
 
-## 3. 플랫폼 파일 생성
-
-Codex가 Flutter SDK 없이 앱 소스와 설정 파일을 먼저 만들었기 때문에, 최초 1회 플랫폼 파일을 생성해야 합니다.
-
-```bash
-flutter create . --project-name address_research_mobile --platforms ios,android
-```
-
-주의: `lib/`, `pubspec.yaml`, `README.md`는 이미 구현된 핵심 파일입니다. Flutter가 덮어쓰기 여부를 묻거나 변경을 만들면, 앱 구현 파일은 이 폴더의 현재 내용을 유지하세요.
-
-## 4. 패키지 설치
+## 3. 패키지 설치
 
 ```bash
 flutter pub get
 ```
 
-## 5. 실행
+## 4. Android 기기/에뮬레이터 실행
 
-iOS 시뮬레이터:
+에뮬레이터 목록 확인:
 
 ```bash
-open -a Simulator
-flutter run
+flutter emulators
 ```
 
-Android 에뮬레이터 또는 실제 기기:
+준비된 Android 에뮬레이터 실행:
+
+```bash
+emulator -avd PlaceNote_API35
+```
+
+다른 터미널에서 앱 실행:
+
+```bash
+scripts/run_android.sh
+```
+
+또는 특정 기기 ID로 실행:
 
 ```bash
 flutter devices
-flutter run
+flutter run -d emulator-5554
 ```
 
-## 6. MVP 데모 순서
+실제 Android 기기는 개발자 옵션과 USB 디버깅을 켠 뒤 USB로 연결하고 `flutter devices`에 표시되면 같은 명령으로 실행합니다.
+
+## 5. 실제 iPhone 실행
+
+먼저 iPhone을 USB로 연결하고 iPhone 화면에서 `이 컴퓨터를 신뢰`를 허용합니다. 그 다음 Xcode에서 Signing Team을 지정합니다.
+
+```bash
+open ios/Runner.xcworkspace
+```
+
+Xcode에서:
+
+- 좌측 `Runner` 프로젝트 선택
+- `Runner` target 선택
+- `Signing & Capabilities`
+- `Team`에 본인 Apple 계정 선택
+- Bundle Identifier는 `com.whitewise95.placenote` 유지
+
+기기 인식 확인:
+
+```bash
+flutter devices
+```
+
+실행:
+
+```bash
+scripts/run_ios.sh
+```
+
+특정 iPhone ID로 실행하려면:
+
+```bash
+flutter run -d <iphone-device-id>
+```
+
+참고: `flutter build ios --no-codesign`은 성공했습니다. 실제 기기 실행만 Apple Signing Team과 연결된 iPhone이 필요합니다.
+
+## 6. iOS 시뮬레이터 주의
+
+현재 OCR 패키지의 Google ML Kit iOS Pod 일부가 Apple Silicon iOS 26+ 시뮬레이터에서 필요한 arm64 simulator architecture를 지원하지 않습니다.
+
+따라서 iOS 시뮬레이터에서는 아래 의존성 문제로 실행이 막힐 수 있습니다.
+
+- `GoogleMLKit`
+- `MLImage`
+- `MLKitCommon`
+- `MLKitVision`
+
+실제 OCR MVP 검증은 실제 iPhone 또는 Android 기기/에뮬레이터에서 진행하는 쪽이 안정적입니다.
+
+## 7. MVP 데모 순서
 
 1. 홈 화면에서 `새 분석 시작`
-2. `샘플 데이터로 시작`
-3. Mock OCR 진행 화면 확인
-4. 주소 후보 선택
+2. `사진첩에서 선택` 또는 `카메라로 촬영`
+3. 주소가 선명한 캡쳐 이미지 선택
+4. OCR 원문과 주소 후보 확인
 5. `이 주소로 분석하기`
 6. 분석 결과 카드 확인
 7. `저장된 이력 보기`
 8. 이력 검색, 상세 재진입, 삭제 확인
 
-사진첩/카메라로 주소가 포함된 이미지를 선택하면 iOS/Android에서는 실제 OCR이 실행됩니다. macOS/Web에서는 ML Kit OCR이 지원되지 않으므로 샘플 OCR 텍스트로 fallback됩니다.
+샘플 흐름을 보고 싶으면 `샘플 데이터로 시작`을 누르면 됩니다.
 
-## 실제 OCR 테스트 방법
+## 8. 실제 OCR 테스트 방법
 
-1. iOS 시뮬레이터 또는 실제 iPhone을 준비합니다.
+1. 실제 iPhone 또는 Android 기기/에뮬레이터를 준비합니다.
 
 ```bash
-open -a Simulator
 flutter devices
-flutter run -d ios
 ```
 
 2. 앱에서 `새 분석 시작`을 누릅니다.
@@ -85,14 +139,7 @@ flutter run -d ios
 5. `주소 후보 찾기`를 누릅니다.
 6. OCR 원문과 주소 후보가 표시되는지 확인합니다.
 
-Android에서 테스트하려면 Android Studio와 Android SDK를 설치한 뒤 에뮬레이터 또는 실제 기기를 연결하고 실행합니다.
-
-```bash
-flutter devices
-flutter run -d android
-```
-
-## 7. 테스트
+## 9. 테스트
 
 ```bash
 flutter test
@@ -100,7 +147,7 @@ flutter test
 
 현재 테스트는 Mock OCR 텍스트에서 한국 도로명주소 후보를 추출하는 핵심 로직을 확인합니다.
 
-## 8. 서버 붙이는 위치
+## 10. 서버 붙이는 위치
 
 아래 파일에서 `TODO(server):`를 검색하면 Spring Boot API로 교체할 지점을 볼 수 있습니다.
 
