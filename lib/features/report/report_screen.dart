@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -74,6 +76,11 @@ class _ReportScreenState extends State<ReportScreen> {
           children: [
             _AddressHeader(
                 report: report, isSaved: isSaved, isSaving: isSaving),
+            if (report.imagePath != null &&
+                File(report.imagePath!).existsSync()) ...[
+              const SizedBox(height: 14),
+              _SavedImagePreview(imagePath: report.imagePath!),
+            ],
             const SizedBox(height: 22),
             const SectionTitle('원문 정보'),
             const SizedBox(height: 10),
@@ -92,6 +99,29 @@ class _ReportScreenState extends State<ReportScreen> {
                 label: const Text('저장 목록 보기'),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SavedImagePreview extends StatelessWidget {
+  const _SavedImagePreview({required this.imagePath});
+
+  final String imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: AspectRatio(
+          aspectRatio: 4 / 3,
+          child: Image.file(
+            File(imagePath),
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

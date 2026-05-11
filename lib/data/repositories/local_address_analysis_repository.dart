@@ -1,4 +1,5 @@
 import '../../core/storage/report_storage.dart';
+import '../../core/storage/image_attachment_storage.dart';
 import '../mock/mock_report_factory.dart';
 import '../models/address_candidate.dart';
 import '../models/extraction_result.dart';
@@ -13,11 +14,14 @@ class LocalAddressAnalysisRepository implements AddressAnalysisRepository {
   LocalAddressAnalysisRepository({
     OcrService? ocrService,
     ReportStorage? storage,
+    ImageAttachmentStorage? imageStorage,
   })  : _ocrService = ocrService ?? MlKitOcrService(),
-        _storage = storage ?? ReportStorage();
+        _storage = storage ?? ReportStorage(),
+        _imageStorage = imageStorage ?? ImageAttachmentStorage();
 
   final OcrService _ocrService;
   final ReportStorage _storage;
+  final ImageAttachmentStorage _imageStorage;
 
   @override
   Future<ExtractionResult> extractCandidates(String? imagePath) async {
@@ -40,9 +44,10 @@ class LocalAddressAnalysisRepository implements AddressAnalysisRepository {
     required String folderId,
   }) async {
     // TODO(server): Spring Boot API 연동 시 POST /v1/address/reports 또는 GET /v1/address/reports 호출로 교체한다.
+    final persistedImagePath = await _imageStorage.persist(imagePath);
     return MockReportFactory.fromCandidate(
       candidate: candidate,
-      imagePath: imagePath,
+      imagePath: persistedImagePath,
       ocrText: ocrText,
       folderId: folderId,
     );
