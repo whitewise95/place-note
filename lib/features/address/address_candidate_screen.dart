@@ -25,8 +25,12 @@ class AddressCandidateScreen extends StatefulWidget {
 class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   AddressCandidate? selected;
   late final TextEditingController manualController;
+  late final List<String> ocrLines;
+  late final List<String> ocrWords;
+  final selectedOcrParts = <String>{};
   bool useManualInput = false;
   bool isCreating = false;
+  bool showOcrWords = false;
 
   @override
   void initState() {
@@ -35,6 +39,8 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
         ? null
         : widget.result.candidates.first;
     manualController = TextEditingController();
+    ocrLines = _extractOcrLines(widget.result.ocrText);
+    ocrWords = _extractOcrWords(widget.result.ocrText);
     useManualInput = widget.result.candidates.isEmpty;
   }
 
@@ -75,6 +81,35 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
     );
   }
 
+  void _toggleOcrPart(String part) {
+    setState(() {
+      useManualInput = true;
+      if (!selectedOcrParts.add(part)) {
+        selectedOcrParts.remove(part);
+      }
+      manualController.text = _selectedOcrText();
+      manualController.selection = TextSelection.collapsed(
+        offset: manualController.text.length,
+      );
+    });
+  }
+
+  void _clearOcrSelection() {
+    setState(() {
+      selectedOcrParts.clear();
+      manualController.clear();
+      useManualInput = widget.result.candidates.isEmpty;
+    });
+  }
+
+  String _selectedOcrText() {
+    final orderedParts = <String>[
+      ...ocrLines.where(selectedOcrParts.contains),
+      ...ocrWords.where(selectedOcrParts.contains),
+    ];
+    return orderedParts.join(' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,7 +132,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
                       icon: Icons.document_scanner_rounded,
                     ),
                     const SizedBox(height: 12),
-                    Text(
+                    SelectableText(
                       widget.result.ocrText.trim(),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             height: 1.5,
@@ -120,6 +155,16 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
               )
             else
               ...widget.result.candidates.map(_candidateTile),
+            const SizedBox(height: 12),
+            _OcrSelectionCard(
+              lines: ocrLines,
+              words: ocrWords,
+              selectedParts: selectedOcrParts,
+              showWords: showOcrWords,
+              onModeChanged: (value) => setState(() => showOcrWords = value),
+              onPartSelected: _toggleOcrPart,
+              onClear: selectedOcrParts.isEmpty ? null : _clearOcrSelection,
+            ),
             const SizedBox(height: 12),
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -167,6 +212,34 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
     );
   }
 
+  List<String> _extractOcrLines(String text) {
+    final seen = <String>{};
+    return text
+        .split(RegExp(r'\r?\n'))
+        .map(_cleanOcrPart)
+        .where((part) => part.length >= 2)
+        .where(seen.add)
+        .toList();
+  }
+
+  List<String> _extractOcrWords(String text) {
+    final seen = <String>{};
+    return text
+        .split(RegExp(r'[\s\n\r]+'))
+        .map(_cleanOcrPart)
+        .where((part) => part.length >= 2)
+        .where((part) => !RegExp(r'^https?://|^www\.').hasMatch(part))
+        .where(seen.add)
+        .toList();
+  }
+
+  String _cleanOcrPart(String value) {
+    return value
+        .replaceAll(RegExp(r'^[^\w가-힣]+|[^\w가-힣\-]+$'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   Widget _candidateTile(AddressCandidate candidate) {
     final isSelected = selected?.id == candidate.id && !useManualInput;
     return AppCard(
@@ -202,6 +275,101 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _OcrSelectionCard extends StatelessWidget {
+  const _OcrSelectionCard({
+    required this.lines,
+    required this.words,
+    required this.selectedParts,
+    required this.showWords,
+    required this.onModeChanged,
+    required this.onPartSelected,
+    required this.onClear,
+  });
+
+  final List<String> lines;
+  final List<String> words;
+  final Set<String> selectedParts;
+  final bool showWords;
+  final ValueChanged<bool> onModeChanged;
+  final ValueChanged<String> onPartSelected;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = showWords ? words : lines;
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'OCR 글자 선택',
+                  style: TextStyle(
+                    color: AppTheme.navy,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: '선택 초기화',
+                onPressed: onClear,
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment<bool>(
+                value: false,
+                icon: Icon(Icons.subject_rounded),
+                label: Text('줄'),
+              ),
+              ButtonSegment<bool>(
+                value: true,
+                icon: Icon(Icons.short_text_rounded),
+                label: Text('단어'),
+              ),
+            ],
+            selected: {showWords},
+            onSelectionChanged: (values) => onModeChanged(values.first),
+          ),
+          const SizedBox(height: 12),
+          if (parts.isEmpty)
+            const Text(
+              '선택할 OCR 텍스트가 없습니다.',
+              style: TextStyle(color: AppTheme.muted),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: parts
+                  .map(
+                    (part) => FilterChip(
+                      label: Text(part),
+                      selected: selectedParts.contains(part),
+                      onSelected: (_) => onPartSelected(part),
+                      selectedColor: AppTheme.mint,
+                      checkmarkColor: AppTheme.teal,
+                      side: BorderSide(
+                        color: selectedParts.contains(part)
+                            ? AppTheme.teal.withOpacity(0.25)
+                            : AppTheme.line,
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
       ),
     );
   }
