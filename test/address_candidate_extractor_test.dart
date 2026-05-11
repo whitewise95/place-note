@@ -48,4 +48,21 @@ void main() {
     expect(candidates, isNotEmpty);
     expect(candidates.first.normalizedAddress, '서울 서대문구 연희동 산5-79');
   });
+
+  test('extracts generic Korean lot number addresses', () {
+    final candidates = AddressCandidateExtractor.extract('''
+경기 성남시 분당구 삼평동 629
+부산 해운대구 우동 1434
+제주시 애월읍 하귀리 123 - 4 번지
+''');
+
+    expect(
+      candidates.map((candidate) => candidate.normalizedAddress),
+      containsAll([
+        '경기 성남시 분당구 삼평동 629',
+        '부산 해운대구 우동 1434',
+        '제주시 애월읍 하귀리 123-4',
+      ]),
+    );
+  });
 }

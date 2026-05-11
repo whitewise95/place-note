@@ -1,12 +1,15 @@
 import '../models/address_candidate.dart';
 
 class AddressCandidateExtractor {
+  static const String _provincePattern =
+      r'(?:서울|서울특별시|서울시|부산|부산광역시|대구|대구광역시|인천|인천광역시|광주|광주광역시|대전|대전광역시|울산|울산광역시|세종|세종특별자치시|경기|경기도|강원|강원특별자치도|충북|충청북도|충남|충청남도|전북|전라북도|전남|전라남도|경북|경상북도|경남|경상남도|제주|제주특별자치도)';
+
   static final RegExp _addressLinePattern = RegExp(
-    r'((서울|서울특별시|부산|부산광역시|대구|대구광역시|인천|인천광역시|광주|광주광역시|대전|대전광역시|울산|울산광역시|세종|세종특별자치시|경기|경기도|강원|강원특별자치도|충북|충청북도|충남|충청남도|전북|전라북도|전남|전라남도|경북|경상북도|경남|경상남도|제주|제주특별자치도)[^\n]{0,55}?(대로|로|길)\s?\d{1,5}[^\n]{0,22})',
+    '(($_provincePattern)[^\\n]{0,55}?(대로|로|길)\\s?\\d{1,5}[^\\n]{0,22})',
   );
 
   static final RegExp _lotAddressPattern = RegExp(
-    r'((?:(?:서울|서울특별시|서울시)\s*)?(?:종로|중|용산|성동|광진|동대문|중랑|성북|강북|도봉|노원|은평|서대문|마포|양천|강서|구로|금천|영등포|동작|관악|서초|강남|송파|강동)구\s+[가-힣0-9]{1,16}(?:동|읍|면|리)\s+(?:산\s*)?\d{1,5}(?:\s*-\s*\d{1,5})?)',
+    '((?:$_provincePattern\\s*)?(?:[가-힣]{1,12}(?:시|군)\\s*)?(?:[가-힣]{1,12}구\\s*)?(?:(?:[가-힣0-9]{1,16}(?:읍|면)\\s+[가-힣0-9]{1,16}리)|(?:[가-힣0-9]{1,16}(?:동|리)))\\s+(?:산\\s*)?\\d{1,5}(?:\\s*-\\s*\\d{1,5})?(?:\\s*번지)?)',
   );
 
   static final RegExp _hyundaiSeoulPattern = RegExp(
@@ -208,6 +211,9 @@ class AddressCandidateExtractor {
         .replaceAll('경상남도', '경남')
         .replaceAll('제주특별자치도', '제주')
         .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'산\s+(\d)'), r'산$1')
+        .replaceAll(RegExp(r'\s*-\s*'), '-')
+        .replaceAll(RegExp(r'\s*번지$'), '')
         .replaceAll(RegExp(r'[,.]$'), '')
         .trim();
 
