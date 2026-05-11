@@ -37,4 +37,15 @@ void main() {
     expect(candidates.first.normalizedAddress, '부산 벡스코 특별행사장');
     expect(candidates.first.detailAddress, '장소명 후보');
   });
+
+  test('extracts Seoul lot number addresses without city prefix', () {
+    final candidates = AddressCandidateExtractor.extract('''
+연희숲쉼터
+서대문구 연희동 산5-79
+카페폭포랑 묶어서 가기 좋아요
+''');
+
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.normalizedAddress, '서울 서대문구 연희동 산5-79');
+  });
 }
