@@ -1,11 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/section_title.dart';
-import '../../core/widgets/status_pill.dart';
-import '../../data/models/address_candidate.dart';
 import '../../data/models/extraction_result.dart';
 import '../../data/repositories/address_candidate_extractor.dart';
 import '../report/report_screen.dart';
@@ -23,25 +23,19 @@ class AddressCandidateScreen extends StatefulWidget {
 }
 
 class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
-  AddressCandidate? selected;
   late final TextEditingController manualController;
   late final List<String> ocrLines;
   late final List<String> ocrWords;
   final selectedOcrParts = <String>{};
-  bool useManualInput = false;
   bool isCreating = false;
   bool showOcrWords = false;
 
   @override
   void initState() {
     super.initState();
-    selected = widget.result.candidates.isEmpty
-        ? null
-        : widget.result.candidates.first;
     manualController = TextEditingController();
     ocrLines = _extractOcrLines(widget.result.ocrText);
     ocrWords = _extractOcrWords(widget.result.ocrText);
-    useManualInput = widget.result.candidates.isEmpty;
   }
 
   @override
@@ -51,13 +45,12 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   }
 
   Future<void> _createReport() async {
-    final candidate = useManualInput
-        ? AddressCandidateExtractor.fromManualInput(manualController.text)
-        : selected;
+    final candidate =
+        AddressCandidateExtractor.fromManualInput(manualController.text);
 
-    if (candidate == null || candidate.rawText.trim().isEmpty) {
+    if (candidate.rawText.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('분석할 주소를 입력하거나 후보를 선택해주세요.')),
+        const SnackBar(content: Text('분석할 주소를 입력하거나 OCR 글자를 선택해주세요.')),
       );
       return;
     }
@@ -83,7 +76,6 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
 
   void _toggleOcrPart(String part) {
     setState(() {
-      useManualInput = true;
       if (!selectedOcrParts.add(part)) {
         selectedOcrParts.remove(part);
       }
@@ -98,8 +90,24 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
     setState(() {
       selectedOcrParts.clear();
       manualController.clear();
-      useManualInput = widget.result.candidates.isEmpty;
     });
+  }
+
+  void _openSourceViewer() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.elevatedSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return _SourceViewerSheet(
+          imagePath: widget.result.imagePath,
+          ocrText: widget.result.ocrText,
+        );
+      },
+    );
   }
 
   String _selectedOcrText() {
@@ -113,49 +121,45 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('주소 후보')),
+      appBar: AppBar(title: const Text('주소 선택')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 32),
           children: [
-            const SectionTitle('OCR 원문'),
+            const SectionTitle('주소 입력'),
             const SizedBox(height: 10),
             AppCard(
-              child: Padding(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const StatusPill(
-                      label: 'Mock OCR',
-                      color: AppTheme.navy,
-                      icon: Icons.document_scanner_rounded,
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '사진과 OCR 원문은 별도 화면에서 확인할 수 있습니다.',
+                      style: TextStyle(
+                        color: AppTheme.muted,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    SelectableText(
-                      widget.result.ocrText.trim(),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.5,
-                            color: AppTheme.ink,
-                          ),
-                    ),
-                  ],
-                ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _openSourceViewer,
+                    icon: const Icon(Icons.visibility_rounded),
+                    label: const Text('원문 보기'),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 22),
-            const SectionTitle('자동 후보'),
-            const SizedBox(height: 10),
-            if (widget.result.candidates.isEmpty)
-              const AppCard(
-                child: Padding(
-                  padding: EdgeInsets.zero,
-                  child: Text('자동 추출된 주소가 없습니다. 직접 입력으로 분석을 시작하세요.'),
-                ),
-              )
-            else
-              ...widget.result.candidates.map(_candidateTile),
             const SizedBox(height: 12),
+            TextField(
+              controller: manualController,
+              minLines: 1,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: '분석할 주소',
+                hintText: '직접 입력하거나 아래 OCR 글자를 선택하세요',
+              ),
+            ),
+            const SizedBox(height: 18),
             _OcrSelectionCard(
               lines: ocrLines,
               words: ocrWords,
@@ -167,33 +171,28 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
             ),
             const SizedBox(height: 12),
             AppCard(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                title: const Text(
-                  '직접 입력하기',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                subtitle: const Text(
-                  '후보를 수정하거나 주소를 직접 입력합니다.',
-                  style: TextStyle(color: AppTheme.muted),
-                ),
-                value: useManualInput,
-                onChanged: (value) => setState(() => useManualInput = value),
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.touch_app_rounded,
+                    color: AppTheme.teal,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      selectedOcrParts.isEmpty
+                          ? 'OCR 글자를 누르면 주소 입력칸에 조합됩니다.'
+                          : '${selectedOcrParts.length}개 글자 조각 선택됨',
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            if (useManualInput) ...[
-              const SizedBox(height: 8),
-              TextField(
-                controller: manualController,
-                minLines: 1,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: '주소 입력',
-                  hintText: '예: 서울 강남구 테헤란로 123 301호',
-                ),
-              ),
-            ],
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: isCreating ? null : _createReport,
@@ -239,42 +238,128 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
+}
 
-  Widget _candidateTile(AddressCandidate candidate) {
-    final isSelected = selected?.id == candidate.id && !useManualInput;
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: EdgeInsets.zero,
-      child: RadioListTile<AddressCandidate>(
-        activeColor: AppTheme.teal,
-        value: candidate,
-        groupValue: selected,
-        onChanged: (value) {
-          setState(() {
-            selected = value;
-            useManualInput = false;
-          });
-        },
-        title: Text(
-          candidate.normalizedAddress,
-          style: const TextStyle(
-            color: AppTheme.navy,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 7),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 6,
+class _SourceViewerSheet extends StatelessWidget {
+  const _SourceViewerSheet({
+    required this.imagePath,
+    required this.ocrText,
+  });
+
+  final String? imagePath;
+  final String ocrText;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: DefaultTabController(
+        length: 2,
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.82,
+          child: Column(
             children: [
-              _Badge(label: '추정 주소', active: isSelected),
-              _Badge(label: '신뢰도 ${candidate.confidence}%', active: isSelected),
-              if (candidate.detailAddress != null)
-                _Badge(label: candidate.detailAddress!, active: isSelected),
+              const SizedBox(height: 10),
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.line,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '원문 보기',
+                        style: TextStyle(
+                          color: AppTheme.ink,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              const TabBar(
+                tabs: [
+                  Tab(icon: Icon(Icons.image_rounded), text: '사진'),
+                  Tab(icon: Icon(Icons.text_snippet_rounded), text: 'OCR 글'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _ImagePreview(imagePath: imagePath),
+                    _OcrTextPreview(ocrText: ocrText),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({required this.imagePath});
+
+  final String? imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = imagePath;
+    if (path == null || path.isEmpty || !File(path).existsSync()) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            '첨부된 사진을 찾을 수 없습니다.',
+            style: TextStyle(color: AppTheme.muted),
+          ),
+        ),
+      );
+    }
+
+    return InteractiveViewer(
+      minScale: 0.8,
+      maxScale: 4,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Image.file(
+            File(path),
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OcrTextPreview extends StatelessWidget {
+  const _OcrTextPreview({required this.ocrText});
+
+  final String ocrText;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(18),
+      child: SelectableText(
+        ocrText.trim(),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              height: 1.5,
+              color: AppTheme.ink,
+            ),
       ),
     );
   }
@@ -349,59 +434,36 @@ class _OcrSelectionCard extends StatelessWidget {
               style: TextStyle(color: AppTheme.muted),
             )
           else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: parts
-                  .map(
-                    (part) => FilterChip(
-                      label: Text(part),
-                      selected: selectedParts.contains(part),
-                      onSelected: (_) => onPartSelected(part),
-                      selectedColor: AppTheme.mint,
-                      checkmarkColor: AppTheme.teal,
-                      side: BorderSide(
-                        color: selectedParts.contains(part)
-                            ? AppTheme.teal.withOpacity(0.25)
-                            : AppTheme.line,
-                      ),
-                    ),
-                  )
-                  .toList(),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 240),
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(right: 8, bottom: 2),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: parts
+                        .map(
+                          (part) => FilterChip(
+                            label: Text(part),
+                            selected: selectedParts.contains(part),
+                            onSelected: (_) => onPartSelected(part),
+                            selectedColor: AppTheme.mint,
+                            checkmarkColor: AppTheme.teal,
+                            side: BorderSide(
+                              color: selectedParts.contains(part)
+                                  ? AppTheme.teal.withOpacity(0.25)
+                                  : AppTheme.line,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.label,
-    required this.active,
-  });
-
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: active ? AppTheme.mint : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: active ? AppTheme.teal.withOpacity(0.16) : AppTheme.line,
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: active ? AppTheme.teal : AppTheme.muted,
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-        ),
       ),
     );
   }
