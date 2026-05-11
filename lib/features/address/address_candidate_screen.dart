@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/section_title.dart';
 import '../../data/models/extraction_result.dart';
+import '../../data/models/text_folder.dart';
 import '../../data/repositories/address_candidate_extractor.dart';
 import '../report/report_screen.dart';
 
@@ -27,7 +28,10 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   late final List<String> ocrLines;
   late final List<String> ocrWords;
   final selectedOcrParts = <String>{};
+  List<TextFolder> folders = [TextFolder.inbox()];
+  String selectedFolderId = TextFolder.inboxId;
   bool isCreating = false;
+  bool isLoadingFolders = true;
   bool showOcrWords = false;
 
   @override
@@ -36,6 +40,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
     manualController = TextEditingController();
     ocrLines = _extractOcrLines(widget.result.ocrText);
     ocrWords = _extractOcrWords(widget.result.ocrText);
+    _loadFolders();
   }
 
   @override
@@ -61,6 +66,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
       candidate: candidate,
       imagePath: widget.result.imagePath,
       ocrText: widget.result.ocrText,
+      folderId: selectedFolderId,
     );
 
     if (!mounted) {
@@ -72,6 +78,64 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
         builder: (_) => ReportScreen(report: report),
       ),
     );
+  }
+
+  Future<void> _loadFolders() async {
+    final loaded = await RepositoryScope.of(context).findFolders();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      folders = loaded;
+      selectedFolderId = loaded.any((folder) => folder.id == selectedFolderId)
+          ? selectedFolderId
+          : TextFolder.inboxId;
+      isLoadingFolders = false;
+    });
+  }
+
+  Future<void> _createFolder() async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('새 폴더'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: '폴더 이름',
+            hintText: '예: 맛집, 부동산, 여행',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('생성'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (name == null || name.trim().isEmpty || !mounted) {
+      return;
+    }
+
+    final folder = await RepositoryScope.of(context).createFolder(name);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      folders = [...folders, folder];
+      selectedFolderId = folder.id;
+    });
   }
 
   void _toggleOcrPart(String part) {
@@ -121,12 +185,12 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('주소 선택')),
+      appBar: AppBar(title: const Text('텍스트 저장')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 32),
           children: [
-            const SectionTitle('주소 입력'),
+            const SectionTitle('저장할 텍스트'),
             const SizedBox(height: 10),
             AppCard(
               padding: const EdgeInsets.all(14),
@@ -150,12 +214,20 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
               ),
             ),
             const SizedBox(height: 12),
+            _FolderPickerCard(
+              folders: folders,
+              selectedFolderId: selectedFolderId,
+              isLoading: isLoadingFolders,
+              onChanged: (value) => setState(() => selectedFolderId = value),
+              onCreate: _createFolder,
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: manualController,
               minLines: 1,
               maxLines: 3,
               decoration: const InputDecoration(
-                labelText: '분석할 주소',
+                labelText: '저장할 문장',
                 hintText: '직접 입력하거나 아래 OCR 글자를 선택하세요',
               ),
             ),
@@ -203,7 +275,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.analytics_rounded),
-              label: const Text('이 주소로 분석하기'),
+              label: const Text('폴더에 저장하기'),
             ),
           ],
         ),
@@ -237,6 +309,75 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
         .replaceAll(RegExp(r'^[^\w가-힣]+|[^\w가-힣\-]+$'), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+  }
+}
+
+class _FolderPickerCard extends StatelessWidget {
+  const _FolderPickerCard({
+    required this.folders,
+    required this.selectedFolderId,
+    required this.isLoading,
+    required this.onChanged,
+    required this.onCreate,
+  });
+
+  final List<TextFolder> folders;
+  final String selectedFolderId;
+  final bool isLoading;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '저장 폴더',
+                  style: TextStyle(
+                    color: AppTheme.navy,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onCreate,
+                icon: const Icon(Icons.create_new_folder_rounded),
+                label: const Text('새 폴더'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (isLoading)
+            const LinearProgressIndicator()
+          else
+            DropdownButtonFormField<String>(
+              initialValue: selectedFolderId,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.folder_rounded),
+              ),
+              items: folders
+                  .map(
+                    (folder) => DropdownMenuItem<String>(
+                      value: folder.id,
+                      child: Text(folder.name),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(value);
+                }
+              },
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -453,7 +594,7 @@ class _OcrSelectionCard extends StatelessWidget {
                             checkmarkColor: AppTheme.teal,
                             side: BorderSide(
                               color: selectedParts.contains(part)
-                                  ? AppTheme.teal.withOpacity(0.25)
+                                  ? AppTheme.teal.withValues(alpha: 0.25)
                                   : AppTheme.line,
                             ),
                           ),

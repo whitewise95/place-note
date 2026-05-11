@@ -162,7 +162,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                   ? null
                   : () => _startWith(imagePath),
               icon: const Icon(Icons.text_snippet_rounded),
-              label: const Text('주소 후보 찾기'),
+              label: const Text('텍스트 읽기'),
             ),
             if (isPicking) ...[
               const SizedBox(height: 16),

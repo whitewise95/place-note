@@ -38,6 +38,7 @@ class ResearchReport {
     required this.summaryCards,
     required this.status,
     required this.createdAt,
+    this.folderId = 'folder-inbox',
     this.imagePath,
     this.ocrText,
     this.detailAddress,
@@ -50,12 +51,13 @@ class ResearchReport {
   final List<SummaryCard> summaryCards;
   final String status;
   final DateTime createdAt;
+  final String folderId;
   final String? imagePath;
   final String? ocrText;
   final String? detailAddress;
   final bool isSaved;
 
-  ResearchReport copyWith({bool? isSaved}) {
+  ResearchReport copyWith({bool? isSaved, String? folderId}) {
     return ResearchReport(
       id: id,
       rawAddress: rawAddress,
@@ -63,6 +65,7 @@ class ResearchReport {
       summaryCards: summaryCards,
       status: status,
       createdAt: createdAt,
+      folderId: folderId ?? this.folderId,
       imagePath: imagePath,
       ocrText: ocrText,
       detailAddress: detailAddress,
@@ -78,6 +81,7 @@ class ResearchReport {
       'summaryCards': summaryCards.map((card) => card.toJson()).toList(),
       'status': status,
       'createdAt': createdAt.toIso8601String(),
+      'folderId': folderId,
       'imagePath': imagePath,
       'ocrText': ocrText,
       'detailAddress': detailAddress,
@@ -95,6 +99,7 @@ class ResearchReport {
           .toList(),
       status: json['status'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      folderId: json['folderId'] as String? ?? 'folder-inbox',
       imagePath: json['imagePath'] as String?,
       ocrText: json['ocrText'] as String?,
       detailAddress: json['detailAddress'] as String?,

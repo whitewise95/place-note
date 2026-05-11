@@ -29,7 +29,7 @@ class _AddressResearchAppState extends State<AddressResearchApp> {
     return RepositoryScope(
       repository: repository,
       child: MaterialApp(
-        title: '주소 분석 앱',
+        title: 'Place Note',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         routes: {

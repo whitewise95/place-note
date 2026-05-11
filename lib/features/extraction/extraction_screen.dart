@@ -4,6 +4,7 @@ import '../../app.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../data/models/extraction_result.dart';
+import '../../data/models/text_folder.dart';
 import '../../data/ocr/mock_ocr_service.dart';
 import '../address/address_candidate_screen.dart';
 import '../report/report_screen.dart';
@@ -84,6 +85,7 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
         candidate: result.candidates.first,
         imagePath: result.imagePath,
         ocrText: result.ocrText,
+        folderId: TextFolder.inboxId,
       );
 
       if (!mounted) {
@@ -138,7 +140,7 @@ class _LoadingState extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         Text(
-          '주소 후보를 찾는 중입니다',
+          '이미지 속 텍스트를 읽는 중입니다',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,

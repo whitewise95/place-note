@@ -6,12 +6,18 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../data/models/research_report.dart';
+import '../../data/models/text_folder.dart';
 import '../report/report_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  const HistoryScreen({
+    this.folder,
+    super.key,
+  });
 
   static const String routeName = '/history';
+
+  final TextFolder? folder;
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -64,11 +70,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   List<ResearchReport> get filteredReports {
     final keyword = searchController.text.trim().toLowerCase();
+    final scopedReports = widget.folder == null
+        ? reports
+        : reports
+            .where((report) => report.folderId == widget.folder!.id)
+            .toList();
+
     if (keyword.isEmpty) {
-      return reports;
+      return scopedReports;
     }
 
-    return reports.where((report) {
+    return scopedReports.where((report) {
       return report.normalizedAddress.toLowerCase().contains(keyword) ||
           report.rawAddress.toLowerCase().contains(keyword);
     }).toList();
@@ -79,7 +91,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final filtered = filteredReports;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('분석 이력')),
+      appBar: AppBar(title: Text(widget.folder?.name ?? '전체 텍스트')),
       body: SafeArea(
         child: Column(
           children: [
@@ -99,7 +111,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   : filtered.isEmpty
                       ? const EmptyState(
                           title: '검색 결과가 없습니다',
-                          message: '저장된 분석 이력이 있으면 주소로 다시 찾을 수 있습니다.',
+                          message: '저장된 텍스트가 있으면 다시 찾을 수 있습니다.',
                         )
                       : RefreshIndicator(
                           onRefresh: _load,
@@ -211,8 +223,8 @@ class _HistoryTile extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('이력 삭제'),
-        content: const Text('이 분석 이력을 삭제할까요?'),
+        title: const Text('텍스트 삭제'),
+        content: const Text('이 저장 항목을 삭제할까요?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

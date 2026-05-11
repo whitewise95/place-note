@@ -10,7 +10,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('주소 분석 앱'), findsOneWidget);
-    expect(find.text('새 분석 시작'), findsOneWidget);
+    expect(find.text('Place Note'), findsOneWidget);
+    expect(find.text('캡쳐 텍스트 저장'), findsOneWidget);
   });
 }

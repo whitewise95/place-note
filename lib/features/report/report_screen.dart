@@ -59,10 +59,10 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('분석 결과'),
+        title: const Text('저장된 텍스트'),
         actions: [
           IconButton(
-            tooltip: '이력',
+            tooltip: '저장 목록',
             onPressed: _openHistory,
             icon: const Icon(Icons.history_rounded),
           ),
@@ -75,7 +75,7 @@ class _ReportScreenState extends State<ReportScreen> {
             _AddressHeader(
                 report: report, isSaved: isSaved, isSaving: isSaving),
             const SizedBox(height: 22),
-            const SectionTitle('자료 카드'),
+            const SectionTitle('원문 정보'),
             const SizedBox(height: 10),
             ...report.summaryCards.map((card) => _SummaryCardTile(card: card)),
             const SizedBox(height: 20),
@@ -83,13 +83,13 @@ class _ReportScreenState extends State<ReportScreen> {
               ElevatedButton.icon(
                 onPressed: isSaving ? null : _save,
                 icon: const Icon(Icons.save_rounded),
-                label: const Text('로컬에 저장'),
+                label: const Text('폴더에 저장'),
               )
             else
               OutlinedButton.icon(
                 onPressed: _openHistory,
                 icon: const Icon(Icons.folder_copy_rounded),
-                label: const Text('저장된 이력 보기'),
+                label: const Text('저장 목록 보기'),
               ),
           ],
         ),
@@ -121,9 +121,9 @@ class _AddressHeader extends StatelessWidget {
             runSpacing: 8,
             children: [
               const StatusPill(
-                label: '추정 주소',
+                label: '선택 텍스트',
                 color: AppTheme.teal,
-                icon: Icons.location_on_rounded,
+                icon: Icons.text_snippet_rounded,
               ),
               StatusPill(
                 label: isSaving ? '저장 중' : (isSaved ? '로컬 저장 완료' : '저장 대기'),
