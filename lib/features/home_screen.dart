@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/app_card.dart';
+import '../core/widgets/dot_mark.dart';
 import '../core/widgets/empty_state.dart';
 import '../core/widgets/section_title.dart';
 import '../data/models/research_report.dart';
@@ -277,55 +278,111 @@ class _HeroPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.line),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A4B2E1F),
+            blurRadius: 26,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Stack(
         children: [
-          const Icon(Icons.folder_special_rounded, color: AppTheme.teal),
-          const SizedBox(height: 16),
-          Text(
-            '캡쳐와 복사 텍스트를 폴더에 모아두세요',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppTheme.navy,
-                  height: 1.22,
-                  fontWeight: FontWeight.w900,
+          Positioned.fill(
+            child: CustomPaint(painter: _DotPatternPainter()),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    DotMark(size: 42),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Dot Archive',
+                        style: TextStyle(
+                          color: AppTheme.acorn,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '사진 속 글자를 OCR로 읽고, 필요한 문장을 골라 폴더별 노트로 저장합니다.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.muted,
-                  height: 1.5,
+                const SizedBox(height: 18),
+                Text(
+                  '캡쳐와 복사 텍스트를 폴더에 차곡차곡',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: AppTheme.brown,
+                        height: 1.22,
+                        fontWeight: FontWeight.w900,
+                      ),
                 ),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              _Metric(label: '폴더', value: '$totalFolders'),
-              const SizedBox(width: 12),
-              _Metric(label: '저장 항목', value: '$totalReports'),
-              const SizedBox(width: 12),
-              const _Metric(label: '저장소', value: 'Local'),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ElevatedButton.icon(
-            onPressed: onCapture,
-            icon: const Icon(Icons.add_photo_alternate_rounded),
-            label: const Text('캡쳐 텍스트 저장'),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: onSample,
-            icon: const Icon(Icons.auto_awesome_rounded),
-            label: const Text('샘플로 흐름 보기'),
+                const SizedBox(height: 10),
+                Text(
+                  '사진 속 글자를 읽고 필요한 문장만 골라 이미지와 함께 기기에 저장합니다.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.muted,
+                        height: 1.5,
+                      ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    _Metric(label: '폴더', value: '$totalFolders'),
+                    const SizedBox(width: 12),
+                    _Metric(label: '저장 항목', value: '$totalReports'),
+                    const SizedBox(width: 12),
+                    const _Metric(label: '저장소', value: 'Local'),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                ElevatedButton.icon(
+                  onPressed: onCapture,
+                  icon: const Icon(Icons.add_photo_alternate_rounded),
+                  label: const Text('캡쳐 텍스트 저장'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: onSample,
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                  label: const Text('샘플로 흐름 보기'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+class _DotPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = AppTheme.caramel.withValues(alpha: 0.12);
+    for (double y = 16; y < size.height; y += 22) {
+      for (double x = 16; x < size.width; x += 22) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: Offset(x, y), width: 3.6, height: 3.6),
+            const Radius.circular(1),
+          ),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _Metric extends StatelessWidget {
@@ -343,7 +400,7 @@ class _Metric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: AppTheme.surfaceAlt,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppTheme.line),
         ),
@@ -398,72 +455,100 @@ class _FolderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.zero,
       onTap: onOpen,
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.mint,
-              borderRadius: BorderRadius.circular(8),
+          Positioned(
+            left: 14,
+            top: 0,
+            child: Container(
+              width: 58,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: AppTheme.surfaceAlt,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+              ),
             ),
-            child: const Icon(Icons.folder_rounded, color: AppTheme.teal),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 16, 8, 14),
+            child: Row(
               children: [
-                Text(
-                  folder.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.navy,
-                    fontWeight: FontWeight.w900,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceAlt,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.line),
+                  ),
+                  child: const Icon(Icons.folder_rounded, color: AppTheme.acorn),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        folder.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.brown,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        latest?.normalizedAddress ?? '아직 저장된 텍스트가 없습니다',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppTheme.muted),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  latest?.normalizedAddress ?? '아직 저장된 텍스트가 없습니다',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppTheme.muted),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceAlt,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(
+                      color: AppTheme.acorn,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: '폴더 관리',
+                  onSelected: (value) {
+                    if (value == 'rename') {
+                      onRename?.call();
+                    } else if (value == 'delete') {
+                      onDelete?.call();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem<String>(
+                      value: 'rename',
+                      enabled: onRename != null,
+                      child: const Text('이름 변경'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      enabled: onDelete != null,
+                      child: const Text('삭제'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$count',
-            style: const TextStyle(
-              color: AppTheme.teal,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          PopupMenuButton<String>(
-            tooltip: '폴더 관리',
-            onSelected: (value) {
-              if (value == 'rename') {
-                onRename?.call();
-              } else if (value == 'delete') {
-                onDelete?.call();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem<String>(
-                value: 'rename',
-                enabled: onRename != null,
-                child: const Text('이름 변경'),
-              ),
-              PopupMenuItem<String>(
-                value: 'delete',
-                enabled: onDelete != null,
-                child: const Text('삭제'),
-              ),
-            ],
           ),
         ],
       ),

@@ -73,7 +73,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 10, 18, 32),
           children: [
-            const SectionTitle('이미지 가져오기'),
+            const SectionTitle('소스 가져오기'),
             const SizedBox(height: 10),
             AppCard(
               padding: const EdgeInsets.all(10),
@@ -84,7 +84,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                     aspectRatio: 4 / 3,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: AppTheme.surface,
+                        color: AppTheme.surfaceAlt,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: AppTheme.line),
                       ),
@@ -109,14 +109,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       StatusPill(
                         label: imagePath == null ? '선택 대기' : '이미지 준비 완료',
                         color:
-                            imagePath == null ? AppTheme.muted : AppTheme.teal,
+                            imagePath == null ? AppTheme.muted : AppTheme.sage,
                         icon: imagePath == null
                             ? Icons.image_search_rounded
                             : Icons.check_circle_rounded,
                       ),
                       const StatusPill(
-                        label: 'OCR Mock',
-                        color: AppTheme.navy,
+                        label: '기기 저장',
+                        color: AppTheme.acorn,
                         icon: Icons.memory_rounded,
                       ),
                     ],
@@ -134,7 +134,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                         isPicking ? null : () => _pick(ImageSource.gallery),
                     icon: Icons.photo_library_rounded,
                     title: '사진첩에서 선택',
-                    subtitle: '저장된 매물 캡쳐를 불러옵니다.',
+                    subtitle: '저장해둔 화면 캡쳐를 불러옵니다.',
                   ),
                   const Divider(height: 1),
                   _SourceButton(
@@ -142,7 +142,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                         isPicking ? null : () => _pick(ImageSource.camera),
                     icon: Icons.photo_camera_rounded,
                     title: '카메라로 촬영',
-                    subtitle: '현장에서 바로 이미지를 촬영합니다.',
+                    subtitle: '문서나 화면을 바로 촬영합니다.',
                   ),
                   const Divider(height: 1),
                   _SourceButton(
@@ -162,7 +162,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                   ? null
                   : () => _startWith(imagePath),
               icon: const Icon(Icons.text_snippet_rounded),
-              label: const Text('텍스트 읽기'),
+              label: const Text('텍스트 읽고 보관하기'),
             ),
             if (isPicking) ...[
               const SizedBox(height: 16),
@@ -203,8 +203,9 @@ class _SourceButton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppTheme.mint,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.line),
               ),
-              child: Icon(icon, color: AppTheme.teal),
+              child: Icon(icon, color: AppTheme.acorn),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -245,7 +246,7 @@ class _PreviewPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.image_search_rounded, size: 48, color: AppTheme.teal),
+          Icon(Icons.image_search_rounded, size: 48, color: AppTheme.acorn),
           SizedBox(height: 10),
           Text(
             '이미지 미리보기',

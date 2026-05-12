@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Place Note Dot Preview</title>
+  <style>
+    :root {
+      --cream: #f6f2ea;
+      --paper: #fffcf5;
+      --paper-2: #fffdf8;
+      --ink: #211d19;
+      --muted: #75675a;
+      --line: #dccbb7;
+      --brown: #6b5542;
+      --brown-deep: #2f2923;
+      --caramel: #e08a32;
+      --sage: #6d8d70;
+      --sage-soft: #e8eee3;
+      --dot: #e08a32;
+      --shadow: rgba(47, 41, 35, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12px 12px, rgba(224, 138, 50, 0.13) 2px, transparent 2px),
+        linear-gradient(135deg, #fbf7ef 0%, #efe2d0 100%);
+      background-size: 24px 24px, auto;
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    .page {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 36px 22px 52px;
+    }
+
+    .brief {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      color: var(--caramel);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--brown-deep);
+      font-size: 34px;
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+
+    .brief p {
+      max-width: 560px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-weight: 650;
+    }
+
+    .palette {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .swatch {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid rgba(75, 52, 37, 0.14);
+      box-shadow: 0 10px 26px var(--shadow);
+    }
+
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+      align-items: start;
+    }
+
+    .phone {
+      overflow: hidden;
+      border: 10px solid #32261d;
+      border-radius: 34px;
+      background: var(--cream);
+      box-shadow: 0 24px 60px rgba(61, 40, 23, 0.25);
+    }
+
+    .screen {
+      min-height: 780px;
+      padding: 18px 16px 22px;
+      background:
+        radial-gradient(circle at 15px 15px, rgba(216, 138, 67, 0.10) 2px, transparent 2px),
+        var(--cream);
+      background-size: 30px 30px;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--brown-deep);
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 16px;
+      padding: 0 4px;
+    }
+
+    .appbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 950;
+      color: var(--brown-deep);
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      padding: 8px;
+      background: var(--brown);
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .brand-mark i {
+      display: block;
+      border-radius: 2px;
+      background: var(--paper);
+    }
+
+    .brand-mark i:nth-child(1),
+    .brand-mark i:nth-child(3),
+    .brand-mark i:nth-child(5),
+    .brand-mark i:nth-child(7),
+    .brand-mark i:nth-child(9) {
+      background: var(--caramel);
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--paper);
+      color: var(--brown);
+      font-weight: 950;
+      box-shadow: 0 8px 22px var(--shadow);
+    }
+
+    .hero {
+      padding: 18px;
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 12px 12px, rgba(224, 138, 50, 0.12) 2px, transparent 2px),
+        linear-gradient(135deg, rgba(255, 252, 245, 0.96), rgba(241, 231, 216, 0.94));
+      background-size: 24px 24px, auto;
+      box-shadow: 0 14px 34px var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero:after {
+      content: "";
+      position: absolute;
+      right: -22px;
+      top: -16px;
+      width: 96px;
+      height: 96px;
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 12px 12px, var(--caramel) 0 4px, transparent 4px);
+      background-size: 20px 20px;
+      opacity: 0.34;
+      transform: rotate(8deg);
+    }
+
+    .hero h2 {
+      width: 85%;
+      margin: 0;
+      color: var(--brown-deep);
+      font-size: 24px;
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      width: 88%;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 253, 248, 0.72);
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--brown-deep);
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .primary {
+      width: 100%;
+      margin-top: 16px;
+      border: 0;
+      border-radius: 13px;
+      padding: 14px 16px;
+      background: var(--brown);
+      color: var(--paper);
+      font-size: 15px;
+      font-weight: 950;
+      box-shadow: 0 14px 28px rgba(118, 84, 58, 0.22);
+    }
+
+    .secondary {
+      width: 100%;
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 13px 16px;
+      background: var(--paper);
+      color: var(--brown-deep);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 20px 0 10px;
+    }
+
+    .section h3 {
+      margin: 0;
+      color: var(--brown-deep);
+      font-size: 16px;
+      font-weight: 950;
+    }
+
+    .section a {
+      color: var(--caramel);
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .folder {
+      position: relative;
+      padding: 15px;
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--paper-2);
+      box-shadow: 0 12px 28px var(--shadow);
+    }
+
+    .folder:before {
+      content: "";
+      position: absolute;
+      top: -8px;
+      left: 16px;
+      width: 68px;
+      height: 14px;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: 10px 10px 0 0;
+      background: #f3dfbf;
+    }
+
+    .folder-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .folder-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: var(--sage-soft);
+      color: var(--sage);
+      font-size: 20px;
+      flex: 0 0 auto;
+    }
+
+    .folder h4,
+    .note h4 {
+      margin: 0;
+      color: var(--brown-deep);
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .folder p,
+    .note p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+
+    .count {
+      margin-left: auto;
+      color: var(--caramel);
+      font-weight: 950;
+    }
+
+    .field-card,
+    .chip-card,
+    .note {
+      padding: 15px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--paper-2);
+      box-shadow: 0 12px 28px var(--shadow);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .select,
+    .textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffefa;
+      color: var(--ink);
+      padding: 12px;
+      font: inherit;
+      font-weight: 750;
+    }
+
+    .textarea {
+      min-height: 76px;
+      resize: none;
+      line-height: 1.4;
+    }
+
+    .source-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 14px;
+      margin-bottom: 12px;
+      border: 1px dashed #d7c3a5;
+      border-radius: 14px;
+      background: rgba(255, 250, 241, 0.78);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .source-link strong {
+      color: var(--brown);
+    }
+
+    .segment {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--cream);
+      margin-bottom: 12px;
+    }
+
+    .segment button {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .segment button.active {
+      background: var(--brown);
+      color: var(--paper);
+    }
+
+    .chips {
+      max-height: 236px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      margin: 0 6px 8px 0;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fffefa;
+      color: var(--brown-deep);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .chip.active {
+      border-color: rgba(216, 138, 67, 0.42);
+      background: #f6d8b6;
+      color: #613818;
+    }
+
+    .thumb {
+      width: 100%;
+      height: 154px;
+      margin-bottom: 12px;
+      border-radius: 15px;
+      background:
+        linear-gradient(rgba(42, 31, 23, 0.05), rgba(42, 31, 23, 0.22)),
+        linear-gradient(135deg, #dec7a5 0%, #8ba083 45%, #664931 100%);
+      border: 1px solid var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .thumb:before {
+      content: "";
+      position: absolute;
+      left: 24px;
+      top: 28px;
+      width: 108px;
+      height: 72px;
+      border-radius: 18px;
+      background: rgba(255, 250, 241, 0.7);
+      transform: rotate(-6deg);
+    }
+
+    .thumb:after {
+      content: "OCR";
+      position: absolute;
+      left: 50px;
+      top: 52px;
+      color: var(--brown);
+      font-size: 22px;
+      font-weight: 950;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .tag {
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: var(--sage-soft);
+      color: var(--sage);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .bottom-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 253, 248, 0.86);
+    }
+
+    .nav {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 20px;
+      height: 40px;
+      border-radius: 12px;
+    }
+
+    .nav.active {
+      background: var(--brown);
+      color: var(--paper);
+    }
+
+    @media (max-width: 980px) {
+      .phones {
+        grid-template-columns: 1fr;
+      }
+
+      .phone {
+        width: min(390px, 100%);
+        margin: 0 auto;
+      }
+
+      .brief {
+        display: block;
+      }
+
+      .palette {
+        justify-content: flex-start;
+        margin-top: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="brief">
+      <div>
+        <div class="eyebrow">DOT ARCHIVE DESIGN PREVIEW</div>
+        <h1>도트처럼 작게 모으는<br />캡쳐 텍스트 보관함</h1>
+        <p>크림, 잉크 브라운, 카라멜 도트를 중심으로 작은 텍스트 조각을 정돈하는 느낌입니다. 장식은 점과 그리드로 제한해 차분한 도구처럼 보이도록 잡았습니다.</p>
+      </div>
+      <div class="palette" aria-label="color palette">
+        <span class="swatch" style="background:#f6f2ea"></span>
+        <span class="swatch" style="background:#fffcf5"></span>
+        <span class="swatch" style="background:#2f2923"></span>
+        <span class="swatch" style="background:#e08a32"></span>
+        <span class="swatch" style="background:#6d8d70"></span>
+      </div>
+    </section>
+
+    <section class="phones">
+      <article class="phone">
+        <div class="screen">
+          <div class="status"><span>9:41</span><span>5G 82</span></div>
+          <div class="appbar">
+            <div class="brand"><span class="brand-mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>Place Note</div>
+            <div class="icon-btn">＋</div>
+          </div>
+
+          <div class="hero">
+            <h2>캡쳐 속 글을 폴더에 담아두세요</h2>
+            <p>사진 속 텍스트를 읽고 필요한 문장만 골라 작은 보관함에 차곡차곡 정리합니다.</p>
+            <div class="metrics">
+              <div class="metric"><strong>4</strong><span>폴더</span></div>
+              <div class="metric"><strong>18</strong><span>저장 항목</span></div>
+              <div class="metric"><strong>Local</strong><span>저장소</span></div>
+            </div>
+            <button class="primary">＋ 캡쳐 텍스트 저장</button>
+            <button class="secondary">샘플로 흐름 보기</button>
+          </div>
+
+          <div class="section">
+            <h3>폴더</h3>
+            <a href="#">추가</a>
+          </div>
+
+          <div class="folder">
+            <div class="folder-row">
+              <div class="folder-icon">▣</div>
+              <div>
+                <h4>기본 보관함</h4>
+                <p>서대문구 연희동 산5-79</p>
+              </div>
+              <div class="count">8</div>
+            </div>
+          </div>
+          <div class="folder">
+            <div class="folder-row">
+              <div class="folder-icon">▣</div>
+              <div>
+                <h4>맛집</h4>
+                <p>연희숲쉼터, 카페폭포 묶어서 가기 좋아요</p>
+              </div>
+              <div class="count">5</div>
+            </div>
+          </div>
+          <div class="folder">
+            <div class="folder-row">
+              <div class="folder-icon">▣</div>
+              <div>
+                <h4>여행</h4>
+                <p>제주시 애월읍 하귀리 123-4</p>
+              </div>
+              <div class="count">3</div>
+            </div>
+          </div>
+
+          <div class="bottom-bar">
+            <div class="nav active">⌂</div>
+            <div class="nav">□</div>
+            <div class="nav">＋</div>
+            <div class="nav">⌕</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="phone">
+        <div class="screen">
+          <div class="status"><span>9:41</span><span>5G 82</span></div>
+          <div class="appbar">
+            <div class="brand"><span class="brand-mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>텍스트 저장</div>
+            <div class="icon-btn">×</div>
+          </div>
+
+          <div class="source-link">
+            <span>사진과 OCR 원문 확인</span>
+            <strong>원문 보기</strong>
+          </div>
+
+          <div class="field-card">
+            <label class="label">저장 폴더</label>
+            <div class="select">맛집 ▾</div>
+          </div>
+
+          <div class="field-card">
+            <label class="label">저장할 문장</label>
+            <textarea class="textarea">서대문구 연희동 산5-79 카페폭포랑 묶어서 가기 좋아요</textarea>
+          </div>
+
+          <div class="chip-card">
+            <div class="section" style="margin-top:0">
+              <h3>OCR 글자 선택</h3>
+              <a href="#">초기화</a>
+            </div>
+            <div class="segment">
+              <button class="active">줄</button>
+              <button>단어</button>
+            </div>
+            <div class="chips">
+              <span class="chip">연희숲쉼터</span>
+              <span class="chip">서울 도심 속 이런 곳이 있다는 사실</span>
+              <span class="chip active">서대문구 연희동 산5-79</span>
+              <span class="chip active">카페폭포랑 묶어서 가기 좋아요</span>
+              <span class="chip">야경 코스로 추천드리니</span>
+              <span class="chip">이번 주에 다녀오세요</span>
+              <span class="chip">조용하게 야경 즐기기 딱 좋은 곳</span>
+              <span class="chip">산책로가 잘 되어 있어서</span>
+            </div>
+          </div>
+
+          <div class="field-card">
+            <p style="margin:0;color:var(--muted);font-weight:850">2개 글자 조각 선택됨</p>
+          </div>
+
+          <button class="primary">폴더에 저장하기</button>
+        </div>
+      </article>
+
+      <article class="phone">
+        <div class="screen">
+          <div class="status"><span>9:41</span><span>5G 82</span></div>
+          <div class="appbar">
+            <div class="brand"><span class="brand-mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>맛집</div>
+            <div class="icon-btn">⋯</div>
+          </div>
+
+          <div class="field-card">
+            <label class="label">검색</label>
+            <div class="select">연희동</div>
+          </div>
+
+          <div class="note">
+            <div class="thumb"></div>
+            <h4>서대문구 연희동 산5-79</h4>
+            <p>카페폭포랑 묶어서 가기 좋아요. 산책로가 잘 되어 있어서 가볍게 데이트하기도 최고.</p>
+            <div class="tag-row">
+              <span class="tag">이미지 저장됨</span>
+              <span class="tag">OCR 원문</span>
+              <span class="tag">오늘 21:14</span>
+            </div>
+          </div>
+
+          <div class="note">
+            <div class="thumb" style="height:118px;background:linear-gradient(135deg,#f0d7b0,#d88a43 55%,#76543a)"></div>
+            <h4>서울 영등포구 여의대로 108 더현대 서울</h4>
+            <p>웨딩박람회 특별행사장. 사전신청 방문자 혜택 정리.</p>
+            <div class="tag-row">
+              <span class="tag">이미지 저장됨</span>
+              <span class="tag">행사</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

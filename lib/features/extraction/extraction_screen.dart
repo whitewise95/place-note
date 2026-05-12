@@ -149,7 +149,7 @@ class _LoadingState extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'ML Kit OCR로 이미지의 텍스트를 인식합니다.',
+          'ML Kit OCR로 텍스트 조각을 꺼내고 있습니다.',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppTheme.muted,
@@ -158,7 +158,7 @@ class _LoadingState extends StatelessWidget {
         const SizedBox(height: 18),
         const StatusPill(
           label: 'On-device OCR',
-          color: AppTheme.teal,
+          color: AppTheme.sage,
           icon: Icons.document_scanner_rounded,
         ),
         const SizedBox(height: 28),
@@ -190,6 +190,7 @@ class _ErrorState extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFFFFBEB),
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppTheme.line),
           ),
           child: const Icon(Icons.error_outline_rounded, color: AppTheme.amber),
         ),

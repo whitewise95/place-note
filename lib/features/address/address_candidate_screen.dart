@@ -55,7 +55,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
 
     if (candidate.rawText.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('분석할 주소를 입력하거나 OCR 글자를 선택해주세요.')),
+        const SnackBar(content: Text('저장할 텍스트를 입력하거나 OCR 글자를 선택해주세요.')),
       );
       return;
     }
@@ -161,9 +161,9 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.elevatedSurface,
+      backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (context) {
         return _SourceViewerSheet(
@@ -228,7 +228,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: '저장할 문장',
-                hintText: '직접 입력하거나 아래 OCR 글자를 선택하세요',
+                hintText: '직접 입력하거나 아래 OCR 조각을 선택하세요',
               ),
             ),
             const SizedBox(height: 18),
@@ -248,13 +248,13 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
                 children: [
                   const Icon(
                     Icons.touch_app_rounded,
-                    color: AppTheme.teal,
+                    color: AppTheme.acorn,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       selectedOcrParts.isEmpty
-                          ? 'OCR 글자를 누르면 주소 입력칸에 조합됩니다.'
+                          ? 'OCR 조각을 누르면 저장 문장에 조합됩니다.'
                           : '${selectedOcrParts.length}개 글자 조각 선택됨',
                       style: const TextStyle(
                         color: AppTheme.muted,
@@ -274,7 +274,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.analytics_rounded),
+                  : const Icon(Icons.archive_rounded),
               label: const Text('폴더에 저장하기'),
             ),
           ],
@@ -591,10 +591,10 @@ class _OcrSelectionCard extends StatelessWidget {
                             selected: selectedParts.contains(part),
                             onSelected: (_) => onPartSelected(part),
                             selectedColor: AppTheme.mint,
-                            checkmarkColor: AppTheme.teal,
+                            checkmarkColor: AppTheme.brown,
                             side: BorderSide(
                               color: selectedParts.contains(part)
-                                  ? AppTheme.teal.withValues(alpha: 0.25)
+                                  ? AppTheme.caramel.withValues(alpha: 0.42)
                                   : AppTheme.line,
                             ),
                           ),

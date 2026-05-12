@@ -157,7 +157,7 @@ class _AddressHeader extends StatelessWidget {
               ),
               StatusPill(
                 label: isSaving ? '저장 중' : (isSaved ? '로컬 저장 완료' : '저장 대기'),
-                color: isSaved ? AppTheme.navy : const Color(0xFFB45309),
+                color: isSaved ? AppTheme.sage : AppTheme.caramel,
                 icon: isSaved
                     ? Icons.check_circle_rounded
                     : Icons.schedule_rounded,
@@ -178,7 +178,7 @@ class _AddressHeader extends StatelessWidget {
             Text(
               report.detailAddress!,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.teal,
+                    color: AppTheme.acorn,
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -244,7 +244,7 @@ class _SummaryCardTile extends StatelessWidget {
                     ),
                     StatusPill(
                       label: isTodo ? 'Server TODO' : 'Mock',
-                      color: isTodo ? AppTheme.amber : AppTheme.teal,
+                      color: isTodo ? AppTheme.caramel : AppTheme.sage,
                     ),
                   ],
                 ),
@@ -252,7 +252,7 @@ class _SummaryCardTile extends StatelessWidget {
                 Text(
                   card.value,
                   style: TextStyle(
-                    color: isTodo ? AppTheme.amber : AppTheme.teal,
+                      color: isTodo ? AppTheme.caramel : AppTheme.sage,
                     fontWeight: FontWeight.w900,
                   ),
                 ),

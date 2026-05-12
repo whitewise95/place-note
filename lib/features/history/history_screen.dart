@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -101,7 +103,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 controller: searchController,
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search_rounded),
-                  hintText: '주소 검색',
+                  hintText: '저장한 텍스트 검색',
                 ),
               ),
             ),
@@ -165,15 +167,7 @@ class _HistoryTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.mint,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.location_on_rounded, color: AppTheme.teal),
-          ),
+          _HistoryThumb(report: report),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -200,7 +194,7 @@ class _HistoryTile extends StatelessWidget {
                     ),
                     const StatusPill(
                       label: 'Local',
-                      color: AppTheme.teal,
+                      color: AppTheme.sage,
                       icon: Icons.storage_rounded,
                     ),
                   ],
@@ -246,5 +240,38 @@ class _HistoryTile extends StatelessWidget {
   String _formatDate(DateTime date) {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')} '
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _HistoryThumb extends StatelessWidget {
+  const _HistoryThumb({required this.report});
+
+  final ResearchReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = report.imagePath;
+    final hasImage = path != null && File(path).existsSync();
+
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceAlt,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: hasImage
+          ? Image.file(
+              File(path),
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.text_snippet_rounded,
+                color: AppTheme.acorn,
+              ),
+            )
+          : const Icon(Icons.text_snippet_rounded, color: AppTheme.acorn),
+    );
   }
 }
