@@ -92,8 +92,25 @@ class LocalAddressAnalysisRepository implements AddressAnalysisRepository {
   }
 
   @override
-  Future<void> delete(String id) {
+  Future<void> delete(String id) async {
     // TODO(server): 서버 이력 삭제 도입 시 DELETE /v1/address-analyses/{id} 호출을 추가한다.
-    return _storage.deleteReport(id);
+    final reports = await _storage.loadReports();
+    ResearchReport? deletingReport;
+    for (final report in reports) {
+      if (report.id == id) {
+        deletingReport = report;
+        break;
+      }
+    }
+
+    await _storage.deleteReport(id);
+
+    final imagePath = deletingReport?.imagePath;
+    final isUsedByAnotherReport = imagePath != null &&
+        reports
+            .any((report) => report.id != id && report.imagePath == imagePath);
+    if (!isUsedByAnotherReport) {
+      await _imageStorage.delete(imagePath);
+    }
   }
 }

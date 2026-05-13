@@ -29,5 +29,6 @@ Before changing UI, read:
 - `docs/design/dot_design_system.md`
 - `design_previews/dot_design_preview.html`
 - `lib/core/theme/app_theme.dart`
+- `tool/generate_dot_app_icons.dart`
 
 Keep those files aligned when the design system changes.

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/app_card.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../data/models/research_report.dart';
@@ -147,7 +146,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 }
 
-class _HistoryTile extends StatelessWidget {
+class _HistoryTile extends StatefulWidget {
   const _HistoryTile({
     required this.report,
     required this.onOpen,
@@ -159,56 +158,96 @@ class _HistoryTile extends StatelessWidget {
   final VoidCallback onDelete;
 
   @override
+  State<_HistoryTile> createState() => _HistoryTileState();
+}
+
+class _HistoryTileState extends State<_HistoryTile> {
+  bool isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      onTap: onOpen,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _HistoryThumb(report: report),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  report.normalizedAddress,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.navy,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedScale(
+        scale: isHovered ? 1.01 : 1,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOut,
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: isHovered ? AppTheme.surfaceAlt : AppTheme.elevatedSurface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isHovered ? AppTheme.caramel : AppTheme.line,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.brown.withValues(alpha: isHovered ? 0.16 : 0.1),
+                blurRadius: isHovered ? 24 : 16,
+                offset: Offset(0, isHovered ? 12 : 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: widget.onOpen,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    StatusPill(
-                      label: _formatDate(report.createdAt),
-                      color: AppTheme.muted,
-                      icon: Icons.schedule_rounded,
+                    _HistoryThumb(report: widget.report),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.report.normalizedAddress,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppTheme.navy,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              StatusPill(
+                                label: _formatDate(widget.report.createdAt),
+                                color: AppTheme.muted,
+                                icon: Icons.schedule_rounded,
+                              ),
+                              const StatusPill(
+                                label: 'Local',
+                                color: AppTheme.sage,
+                                icon: Icons.storage_rounded,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    const StatusPill(
-                      label: 'Local',
-                      color: AppTheme.sage,
-                      icon: Icons.storage_rounded,
+                    const SizedBox(width: 8),
+                    _HoverActions(
+                      isHovered: isHovered,
+                      onOpen: widget.onOpen,
+                      onDelete: () => _confirmDelete(context),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-          IconButton(
-            tooltip: '삭제',
-            onPressed: () => _confirmDelete(context),
-            icon: const Icon(Icons.delete_outline_rounded),
-            color: AppTheme.muted,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -233,13 +272,71 @@ class _HistoryTile extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      onDelete();
+      widget.onDelete();
     }
   }
 
   String _formatDate(DateTime date) {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')} '
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _HoverActions extends StatelessWidget {
+  const _HoverActions({
+    required this.isHovered,
+    required this.onOpen,
+    required this.onDelete,
+  });
+
+  final bool isHovered;
+  final VoidCallback onOpen;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: isHovered ? 1 : 0.72,
+      duration: const Duration(milliseconds: 140),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: EdgeInsets.all(isHovered ? 4 : 0),
+        decoration: BoxDecoration(
+          color: isHovered ? AppTheme.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isHovered ? AppTheme.line : Colors.transparent,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              height: isHovered ? 40 : 0,
+              child: ClipRect(
+                child: AnimatedOpacity(
+                  opacity: isHovered ? 1 : 0,
+                  duration: const Duration(milliseconds: 100),
+                  child: IconButton(
+                    tooltip: '열기',
+                    onPressed: onOpen,
+                    icon: const Icon(Icons.open_in_new_rounded),
+                    color: AppTheme.acorn,
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: '삭제',
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline_rounded),
+              color: isHovered ? AppTheme.caramel : AppTheme.muted,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

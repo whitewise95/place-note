@@ -5,6 +5,7 @@ import '../core/theme/app_theme.dart';
 import '../core/widgets/app_card.dart';
 import '../core/widgets/dot_mark.dart';
 import '../core/widgets/empty_state.dart';
+import '../core/widgets/folder_name_dialog.dart';
 import '../core/widgets/section_title.dart';
 import '../data/models/research_report.dart';
 import '../data/models/text_folder.dart';
@@ -130,40 +131,28 @@ class _HomeScreenState extends State<HomeScreen> {
     required String title,
     String initialValue = '',
   }) async {
-    final controller = TextEditingController(text: initialValue);
-    final result = await showDialog<String>(
+    return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: '폴더 이름',
-            hintText: '예: 맛집, 부동산, 여행',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('저장'),
-          ),
-        ],
+      builder: (context) => FolderNameDialog(
+        title: title,
+        initialValue: initialValue,
+        confirmLabel: '저장',
       ),
     );
-    controller.dispose();
-    return result;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Place Note'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DotMark(size: 30),
+            SizedBox(width: 10),
+            Text('Place Note'),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: '새 폴더',
@@ -192,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onCapture: _openCapture,
                     onSample: _startSample,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -297,26 +286,10 @@ class _HeroPanel extends StatelessWidget {
             child: CustomPaint(painter: _DotPatternPainter()),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
-                  children: [
-                    DotMark(size: 42),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Dot Archive',
-                        style: TextStyle(
-                          color: AppTheme.acorn,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
                 Text(
                   '캡쳐와 복사 텍스트를 폴더에 차곡차곡',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -483,7 +456,8 @@ class _FolderTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppTheme.line),
                   ),
-                  child: const Icon(Icons.folder_rounded, color: AppTheme.acorn),
+                  child:
+                      const Icon(Icons.folder_rounded, color: AppTheme.acorn),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

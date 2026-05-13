@@ -62,4 +62,5 @@ Keep typography compact and readable. Use high-weight titles for important label
 - Shared card styling lives in `lib/core/widgets/app_card.dart`.
 - Status chips live in `lib/core/widgets/status_pill.dart`.
 - Dot mark lives in `lib/core/widgets/dot_mark.dart`.
+- App launcher icons are generated from the same 3x3 dot mark with `tool/generate_dot_app_icons.dart`.
 - Preview reference lives in `design_previews/dot_design_preview.html`.

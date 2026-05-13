@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/folder_name_dialog.dart';
 import '../../core/widgets/section_title.dart';
 import '../../data/models/extraction_result.dart';
 import '../../data/models/text_folder.dart';
@@ -96,32 +97,13 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   }
 
   Future<void> _createFolder() async {
-    final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('새 폴더'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: '폴더 이름',
-            hintText: '예: 맛집, 부동산, 여행',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('생성'),
-          ),
-        ],
+      builder: (context) => const FolderNameDialog(
+        title: '새 폴더',
+        confirmLabel: '생성',
       ),
     );
-    controller.dispose();
 
     if (name == null || name.trim().isEmpty || !mounted) {
       return;

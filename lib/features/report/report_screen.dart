@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../app.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
-import '../../core/widgets/section_title.dart';
 import '../../core/widgets/status_pill.dart';
 import '../../data/models/research_report.dart';
 import '../history/history_screen.dart';
@@ -81,10 +80,6 @@ class _ReportScreenState extends State<ReportScreen> {
               const SizedBox(height: 14),
               _SavedImagePreview(imagePath: report.imagePath!),
             ],
-            const SizedBox(height: 22),
-            const SectionTitle('원문 정보'),
-            const SizedBox(height: 10),
-            ...report.summaryCards.map((card) => _SummaryCardTile(card: card)),
             const SizedBox(height: 20),
             if (!isSaved)
               ElevatedButton.icon(
@@ -114,16 +109,66 @@ class _SavedImagePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: EdgeInsets.zero,
-      child: ClipRRect(
+      child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        child: AspectRatio(
-          aspectRatio: 4 / 3,
-          child: Image.file(
-            File(imagePath),
-            fit: BoxFit.cover,
+        onTap: () => _openImageViewer(context),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(color: AppTheme.surfaceAlt),
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  void _openImageViewer(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(14),
+          backgroundColor: AppTheme.brown,
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.82,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: InteractiveViewer(
+                      minScale: 0.8,
+                      maxScale: 4,
+                      child: Center(
+                        child: Image.file(
+                          File(imagePath),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: IconButton.filled(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -196,79 +241,5 @@ class _AddressHeader extends StatelessWidget {
   String _formatDate(DateTime date) {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')} '
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _SummaryCardTile extends StatelessWidget {
-  const _SummaryCardTile({required this.card});
-
-  final SummaryCard card;
-
-  @override
-  Widget build(BuildContext context) {
-    final isTodo = card.status == 'server_todo';
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(15),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isTodo ? const Color(0xFFF8FAFC) : AppTheme.mint,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.line),
-            ),
-            child: Icon(
-              isTodo ? Icons.cloud_sync_rounded : Icons.check_circle_rounded,
-              color: isTodo ? AppTheme.muted : AppTheme.teal,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        card.title,
-                        style: const TextStyle(
-                          color: AppTheme.navy,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    StatusPill(
-                      label: isTodo ? 'Server TODO' : 'Mock',
-                      color: isTodo ? AppTheme.caramel : AppTheme.sage,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  card.value,
-                  style: TextStyle(
-                      color: isTodo ? AppTheme.caramel : AppTheme.sage,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  card.description,
-                  style: const TextStyle(
-                    color: AppTheme.muted,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
