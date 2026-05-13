@@ -9,9 +9,7 @@ import '../core/widgets/folder_name_dialog.dart';
 import '../core/widgets/section_title.dart';
 import '../data/models/research_report.dart';
 import '../data/models/text_folder.dart';
-import '../data/ocr/mock_ocr_service.dart';
 import 'capture/capture_screen.dart';
-import 'extraction/extraction_screen.dart';
 import 'history/history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -56,15 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openCapture() async {
     await Navigator.of(context).pushNamed(CaptureScreen.routeName);
-    _refresh();
-  }
-
-  Future<void> _startSample() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const ExtractionScreen(imagePath: MockOcrSource.sample),
-      ),
-    );
     _refresh();
   }
 
@@ -161,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButton: _CaptureFloatingButton(onPressed: _openCapture),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => _refresh(),
@@ -175,13 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
               return ListView(
                 padding: const EdgeInsets.fromLTRB(18, 10, 18, 32),
                 children: [
-                  _HeroPanel(
-                    totalFolders: data.folders.length,
-                    totalReports: data.reports.length,
-                    onCapture: _openCapture,
-                    onSample: _startSample,
-                  ),
-                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -229,6 +212,84 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _CaptureFloatingButton extends StatefulWidget {
+  const _CaptureFloatingButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  State<_CaptureFloatingButton> createState() => _CaptureFloatingButtonState();
+}
+
+class _CaptureFloatingButtonState extends State<_CaptureFloatingButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController controller;
+  late final Animation<double> floatOffset;
+  late final Animation<double> shadowLift;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1900),
+    )..repeat(reverse: true);
+    final curve = CurvedAnimation(parent: controller, curve: Curves.easeInOut);
+    floatOffset = Tween<double>(begin: 0, end: -7).animate(curve);
+    shadowLift = Tween<double>(begin: 0, end: 1).animate(curve);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final lift = shadowLift.value;
+        return Transform.translate(
+          offset: Offset(0, floatOffset.value),
+          child: Container(
+            width: 74,
+            height: 74,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.brown.withValues(alpha: 0.22 + lift * 0.04),
+                  blurRadius: 28 + lift * 8,
+                  offset: Offset(0, 18 + lift * 5),
+                ),
+                BoxShadow(
+                  color: AppTheme.caramel.withValues(alpha: 0.14 + lift * 0.08),
+                  blurRadius: 16 + lift * 8,
+                  offset: Offset(0, 4 + lift * 2),
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: FloatingActionButton.large(
+        heroTag: 'captureTextFab',
+        tooltip: '사진 속 글자 읽기',
+        elevation: 0,
+        highlightElevation: 0,
+        backgroundColor: AppTheme.brown,
+        foregroundColor: AppTheme.surface,
+        shape: const CircleBorder(),
+        onPressed: widget.onPressed,
+        child: const DotMark(size: 36),
+      ),
+    );
+  }
+}
+
 class _HomeData {
   const _HomeData({
     required this.folders,
@@ -249,161 +310,6 @@ class _HomeData {
   ResearchReport? latestFor(String folderId) {
     final items = reports.where((report) => report.folderId == folderId);
     return items.isEmpty ? null : items.first;
-  }
-}
-
-class _HeroPanel extends StatelessWidget {
-  const _HeroPanel({
-    required this.totalFolders,
-    required this.totalReports,
-    required this.onCapture,
-    required this.onSample,
-  });
-
-  final int totalFolders;
-  final int totalReports;
-  final VoidCallback onCapture;
-  final VoidCallback onSample;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.line),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A4B2E1F),
-            blurRadius: 26,
-            offset: Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _DotPatternPainter()),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '캡쳐와 복사 텍스트를 폴더에 차곡차곡',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppTheme.brown,
-                        height: 1.22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '사진 속 글자를 읽고 필요한 문장만 골라 이미지와 함께 기기에 저장합니다.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.muted,
-                        height: 1.5,
-                      ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    _Metric(label: '폴더', value: '$totalFolders'),
-                    const SizedBox(width: 12),
-                    _Metric(label: '저장 항목', value: '$totalReports'),
-                    const SizedBox(width: 12),
-                    const _Metric(label: '저장소', value: 'Local'),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                ElevatedButton.icon(
-                  onPressed: onCapture,
-                  icon: const Icon(Icons.add_photo_alternate_rounded),
-                  label: const Text('캡쳐 텍스트 저장'),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: onSample,
-                  icon: const Icon(Icons.auto_awesome_rounded),
-                  label: const Text('샘플로 흐름 보기'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DotPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = AppTheme.caramel.withValues(alpha: 0.12);
-    for (double y = 16; y < size.height; y += 22) {
-      for (double x = 16; x < size.width; x += 22) {
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromCenter(center: Offset(x, y), width: 3.6, height: 3.6),
-            const Radius.circular(1),
-          ),
-          paint,
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceAlt,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.line),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.navy,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.muted,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
