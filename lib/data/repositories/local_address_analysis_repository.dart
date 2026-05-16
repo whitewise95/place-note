@@ -1,5 +1,6 @@
 import '../../core/storage/report_storage.dart';
 import '../../core/storage/image_attachment_storage.dart';
+import '../kakao/kakao_address_search_service.dart';
 import '../mock/mock_report_factory.dart';
 import '../models/address_candidate.dart';
 import '../models/extraction_result.dart';
@@ -15,13 +16,17 @@ class LocalAddressAnalysisRepository implements AddressAnalysisRepository {
     OcrService? ocrService,
     ReportStorage? storage,
     ImageAttachmentStorage? imageStorage,
+    KakaoAddressSearchService? kakaoAddressSearchService,
   })  : _ocrService = ocrService ?? MlKitOcrService(),
         _storage = storage ?? ReportStorage(),
-        _imageStorage = imageStorage ?? ImageAttachmentStorage();
+        _imageStorage = imageStorage ?? ImageAttachmentStorage(),
+        _kakaoAddressSearchService =
+            kakaoAddressSearchService ?? KakaoAddressSearchService();
 
   final OcrService _ocrService;
   final ReportStorage _storage;
   final ImageAttachmentStorage _imageStorage;
+  final KakaoAddressSearchService _kakaoAddressSearchService;
 
   @override
   Future<ExtractionResult> extractCandidates(String? imagePath) async {
@@ -51,6 +56,15 @@ class LocalAddressAnalysisRepository implements AddressAnalysisRepository {
       ocrText: ocrText,
       folderId: folderId,
     );
+  }
+
+  @override
+  Future<AddressCandidate> resolveAddress(AddressCandidate candidate) async {
+    try {
+      return await _kakaoAddressSearchService.resolve(candidate) ?? candidate;
+    } catch (_) {
+      return candidate;
+    }
   }
 
   @override

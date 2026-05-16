@@ -63,8 +63,9 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
 
     setState(() => isCreating = true);
     final repository = RepositoryScope.of(context);
+    final resolvedCandidate = await repository.resolveAddress(candidate);
     final report = await repository.createReport(
-      candidate: candidate,
+      candidate: resolvedCandidate,
       imagePath: widget.result.imagePath,
       ocrText: widget.result.ocrText,
       folderId: selectedFolderId,
@@ -257,7 +258,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.archive_rounded),
-              label: const Text('폴더에 저장하기'),
+              label: Text(isCreating ? '주소 확인 중' : '폴더에 저장하기'),
             ),
           ],
         ),

@@ -15,3 +15,4 @@ android/local.properties
 .idea/
 .vscode/
 .DS_Store
+config/app_config.local.yml

@@ -7,4 +7,4 @@ source "$SCRIPT_DIR/flutter_env.sh"
 
 cd "$PROJECT_DIR"
 flutter pub get
-flutter run -d macos
+flutter run "${PLACE_NOTE_DART_DEFINES[@]}" -d macos

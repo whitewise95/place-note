@@ -13,6 +13,8 @@ abstract class AddressAnalysisRepository {
     required String folderId,
   });
 
+  Future<AddressCandidate> resolveAddress(AddressCandidate candidate);
+
   Future<List<ResearchReport>> findHistories();
 
   Future<List<TextFolder>> findFolders();

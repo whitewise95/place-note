@@ -8,4 +8,4 @@ source "$SCRIPT_DIR/flutter_env.sh"
 cd "$PROJECT_DIR"
 flutter pub get
 flutter devices
-flutter run -d "${1:-android}"
+flutter run "${PLACE_NOTE_DART_DEFINES[@]}" -d "${1:-android}"
