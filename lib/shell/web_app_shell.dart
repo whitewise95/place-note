@@ -159,16 +159,21 @@ class _WebAppShellState extends State<WebAppShell> {
         title: 'Place Note',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
-        routes: {
-          CaptureScreen.routeName: (context) {
-            final arguments = ModalRoute.of(context)?.settings.arguments;
-            final options = arguments is CaptureRouteOptions
-                ? arguments
-                : const CaptureRouteOptions();
-            return CaptureScreen(
+        onGenerateRoute: (settings) {
+          if (settings.name != CaptureScreen.routeName) {
+            return null;
+          }
+
+          final arguments = settings.arguments;
+          final options = arguments is CaptureRouteOptions
+              ? arguments
+              : const CaptureRouteOptions();
+          return MaterialPageRoute<String?>(
+            settings: settings,
+            builder: (_) => CaptureScreen(
               returnToWebAfterSave: options.returnToWebAfterSave,
-            );
-          },
+            ),
+          );
         },
         home: Scaffold(
           body: SafeArea(
