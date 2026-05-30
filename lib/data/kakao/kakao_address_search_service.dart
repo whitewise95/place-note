@@ -56,6 +56,9 @@ class KakaoAddressSearchService {
 
     final roadAddress = _nestedAddressName(first['road_address']);
     final lotAddress = _nestedAddressName(first['address']);
+    final locationAddress = first['address'] is Map<String, dynamic>
+        ? first['address'] as Map<String, dynamic>
+        : first['road_address'] as Map<String, dynamic>?;
     final documentAddress = first['address_name'] as String?;
     final normalizedAddress = roadAddress ?? documentAddress ?? lotAddress;
 
@@ -73,7 +76,24 @@ class KakaoAddressSearchService {
         lotAddress: lotAddress,
         fallback: candidate.detailAddress,
       ),
+      latitude: _coordinate(first['y']),
+      longitude: _coordinate(first['x']),
+      province: _nestedText(locationAddress, 'region_1depth_name'),
+      district: _nestedText(locationAddress, 'region_2depth_name'),
+      locality: _nestedText(locationAddress, 'region_3depth_name'),
     );
+  }
+
+  double? _coordinate(Object? value) {
+    return value is String ? double.tryParse(value) : null;
+  }
+
+  String? _nestedText(Map<String, dynamic>? value, String key) {
+    final text = value?[key];
+    if (text is! String || text.trim().isEmpty) {
+      return null;
+    }
+    return text.trim();
   }
 
   String? _nestedAddressName(Object? value) {

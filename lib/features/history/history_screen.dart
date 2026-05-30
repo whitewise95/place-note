@@ -140,6 +140,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   AddressRegion _regionOf(ResearchReport report) {
+    final structuredAddress = [
+      report.province,
+      report.district,
+      report.locality,
+    ].whereType<String>().where((value) => value.trim().isNotEmpty).join(' ');
+    if (structuredAddress.isNotEmpty) {
+      return AddressRegionParser.parse(structuredAddress);
+    }
     return AddressRegionParser.parse(report.normalizedAddress);
   }
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:image/image.dart' as img;
@@ -59,6 +60,31 @@ class ImageAttachmentStorage {
     }
 
     await file.delete();
+  }
+
+  Future<String?> readAsDataUrl(String? imagePath) async {
+    final file = await _managedImageFile(imagePath);
+    if (file == null) {
+      return null;
+    }
+
+    final bytes = await file.readAsBytes();
+    return 'data:image/jpeg;base64,${base64Encode(bytes)}';
+  }
+
+  Future<File?> _managedImageFile(String? imagePath) async {
+    if (imagePath == null ||
+        imagePath.isEmpty ||
+        imagePath == MockOcrSource.sample) {
+      return null;
+    }
+
+    final documents = await getApplicationDocumentsDirectory();
+    final imageDir = Directory(p.join(documents.path, 'place_note_images'));
+    final file = File(imagePath);
+    final isManagedImage = p.equals(file.parent.path, imageDir.path) ||
+        p.isWithin(imageDir.path, file.path);
+    return isManagedImage && file.existsSync() ? file : null;
   }
 
   Future<List<int>?> _createStoredImageBytes(File source) async {

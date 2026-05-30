@@ -42,6 +42,11 @@ class ResearchReport {
     this.imagePath,
     this.ocrText,
     this.detailAddress,
+    this.latitude,
+    this.longitude,
+    this.province,
+    this.district,
+    this.locality,
     this.isSaved = false,
   });
 
@@ -55,6 +60,11 @@ class ResearchReport {
   final String? imagePath;
   final String? ocrText;
   final String? detailAddress;
+  final double? latitude;
+  final double? longitude;
+  final String? province;
+  final String? district;
+  final String? locality;
   final bool isSaved;
 
   ResearchReport copyWith({bool? isSaved, String? folderId}) {
@@ -69,6 +79,11 @@ class ResearchReport {
       imagePath: imagePath,
       ocrText: ocrText,
       detailAddress: detailAddress,
+      latitude: latitude,
+      longitude: longitude,
+      province: province,
+      district: district,
+      locality: locality,
       isSaved: isSaved ?? this.isSaved,
     );
   }
@@ -85,6 +100,11 @@ class ResearchReport {
       'imagePath': imagePath,
       'ocrText': ocrText,
       'detailAddress': detailAddress,
+      'latitude': latitude,
+      'longitude': longitude,
+      'province': province,
+      'district': district,
+      'locality': locality,
       'isSaved': isSaved,
     };
   }
@@ -103,6 +123,11 @@ class ResearchReport {
       imagePath: json['imagePath'] as String?,
       ocrText: json['ocrText'] as String?,
       detailAddress: json['detailAddress'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      province: json['province'] as String?,
+      district: json['district'] as String?,
+      locality: json['locality'] as String?,
       isSaved: json['isSaved'] as bool? ?? true,
     );
   }

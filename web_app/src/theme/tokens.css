@@ -1,0 +1,18 @@
+:root {
+  --paper: #f6f2ea;
+  --paper-deep: #e8ddce;
+  --surface: #fffcf5;
+  --surface-alt: #f1e7d8;
+  --brown: #2f2923;
+  --acorn: #6b5542;
+  --caramel: #e08a32;
+  --sage: #6d8d70;
+  --sage-pale: #ebf0e8;
+  --ink: #211d19;
+  --muted: #75675a;
+  --line: #dccbb7;
+  --shadow: rgba(47, 41, 35, 0.1);
+  font-family: Inter, Pretendard, "Noto Sans KR", Arial, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}

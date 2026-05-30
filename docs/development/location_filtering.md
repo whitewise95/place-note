@@ -1,7 +1,8 @@
 # Location Filtering Notes
 
-Place Note currently derives region filters from saved `normalizedAddress`
-strings so existing local data can be filtered without a server migration.
+Place Note stores Kakao location metadata on newly resolved addresses and
+derives region filters from saved `normalizedAddress` strings for older local
+data without a migration.
 
 Current filter keys:
 
@@ -9,8 +10,7 @@ Current filter keys:
 - District: `중구`, `성남시 분당구`, `해운대구`
 - Locality or road: `연희동`, `삼평동`, `퇴계로`
 
-When Kakao Map / Local API is enabled, keep the same UI but store structured
-location fields from the Kakao response instead of relying only on text parsing:
+When Kakao Map / Local API resolves an address, the local saved report stores:
 
 - `region_1depth_name` or equivalent province value
 - `region_2depth_name` / city-district value
@@ -19,5 +19,9 @@ location fields from the Kakao response instead of relying only on text parsing:
 - lot address name
 - latitude (`y`) and longitude (`x`)
 
-The existing parser should remain as a fallback for older local records and
-OCR-only entries that do not have Kakao metadata.
+The history UI prefers structured Kakao region fields. The existing parser
+remains as a fallback for older local records and OCR-only entries without
+Kakao metadata. In the hybrid UI, reports with latitude and longitude show a
+Kakao Maps JavaScript SDK marker in the deployed React page. React receives
+its key from Vercel's `VITE_KAKAO_JAVASCRIPT_KEY` environment variable and
+must run on a web origin registered in Kakao Developers.

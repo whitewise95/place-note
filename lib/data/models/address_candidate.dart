@@ -5,6 +5,11 @@ class AddressCandidate {
     required this.normalizedAddress,
     required this.confidence,
     this.detailAddress,
+    this.latitude,
+    this.longitude,
+    this.province,
+    this.district,
+    this.locality,
   });
 
   final String id;
@@ -12,6 +17,11 @@ class AddressCandidate {
   final String normalizedAddress;
   final int confidence;
   final String? detailAddress;
+  final double? latitude;
+  final double? longitude;
+  final String? province;
+  final String? district;
+  final String? locality;
 
   Map<String, dynamic> toJson() {
     return {
@@ -20,6 +30,11 @@ class AddressCandidate {
       'normalizedAddress': normalizedAddress,
       'confidence': confidence,
       'detailAddress': detailAddress,
+      'latitude': latitude,
+      'longitude': longitude,
+      'province': province,
+      'district': district,
+      'locality': locality,
     };
   }
 
@@ -30,6 +45,11 @@ class AddressCandidate {
       normalizedAddress: json['normalizedAddress'] as String,
       confidence: json['confidence'] as int,
       detailAddress: json['detailAddress'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      province: json['province'] as String?,
+      district: json['district'] as String?,
+      locality: json['locality'] as String?,
     );
   }
 }

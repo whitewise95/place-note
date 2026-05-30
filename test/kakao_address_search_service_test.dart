@@ -23,8 +23,13 @@ void main() {
             "documents": [
               {
                 "address_name": "서울 중구 흥인동 13-1",
+                "x": "127.009",
+                "y": "37.565",
                 "address": {
-                  "address_name": "서울 중구 흥인동 13-1"
+                  "address_name": "서울 중구 흥인동 13-1",
+                  "region_1depth_name": "서울",
+                  "region_2depth_name": "중구",
+                  "region_3depth_name": "흥인동"
                 },
                 "road_address": {
                   "address_name": "서울 중구 퇴계로 409"
@@ -55,6 +60,11 @@ void main() {
     expect(resolved.rawText, '서울 중구 퇴계로 409-9 1층');
     expect(resolved.detailAddress, '1층 · 지번: 서울 중구 흥인동 13-1');
     expect(resolved.confidence, 96);
+    expect(resolved.latitude, 37.565);
+    expect(resolved.longitude, 127.009);
+    expect(resolved.province, '서울');
+    expect(resolved.district, '중구');
+    expect(resolved.locality, '흥인동');
   });
 
   test('returns null without API key', () async {
