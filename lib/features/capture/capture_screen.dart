@@ -70,7 +70,22 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
-  void _startWith(String? path) {
+  Future<void> _startWith(String? path) async {
+    if (widget.returnToWebAfterSave) {
+      final reportId = await Navigator.of(context).push<String>(
+        MaterialPageRoute<String>(
+          builder: (_) => ExtractionScreen(
+            imagePath: path,
+            returnToWebAfterSave: widget.returnToWebAfterSave,
+          ),
+        ),
+      );
+      if (mounted && reportId != null) {
+        Navigator.of(context).pop(reportId);
+      }
+      return;
+    }
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => ExtractionScreen(

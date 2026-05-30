@@ -1,4 +1,5 @@
 # Copy this file to config/app_config.local.yml and replace the placeholder.
 # config/app_config.local.yml is ignored by git, so real API keys stay local.
 kakao_rest_api_key: "{kakao_rest_api_key}"
+kakao_javascript_key: "{kakao_javascript_key}"
 place_note_web_app_url: "{place_note_web_app_url}"

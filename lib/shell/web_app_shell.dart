@@ -13,6 +13,8 @@ import '../data/repositories/address_analysis_repository.dart';
 import '../data/repositories/local_address_analysis_repository.dart';
 import '../features/capture/capture_screen.dart';
 
+const _kakaoJavascriptKey = String.fromEnvironment('KAKAO_JAVASCRIPT_KEY');
+
 class WebAppShell extends StatefulWidget {
   WebAppShell({
     required this.webAppUri,
@@ -65,6 +67,7 @@ class _WebAppShellState extends State<WebAppShell> {
             }
           },
           onPageFinished: (_) {
+            unawaited(_injectRuntimeConfig());
             if (mounted) {
               setState(() => isLoading = false);
             }
@@ -113,9 +116,9 @@ class _WebAppShellState extends State<WebAppShell> {
     unawaited(
       navigator
           .pushNamed<String?>(
-            CaptureScreen.routeName,
-            arguments: const CaptureRouteOptions(returnToWebAfterSave: true),
-          )
+        CaptureScreen.routeName,
+        arguments: const CaptureRouteOptions(returnToWebAfterSave: true),
+      )
           .then((result) {
         if (mounted && result != null) {
           return _emitArchiveChanged(result);
@@ -131,6 +134,20 @@ class _WebAppShellState extends State<WebAppShell> {
     await controller.runJavaScript(
       'window.dispatchEvent(new CustomEvent("place-note:native-response", '
       '{ detail: $encoded }));',
+    );
+  }
+
+  Future<void> _injectRuntimeConfig() async {
+    if (_kakaoJavascriptKey.trim().isEmpty) {
+      return;
+    }
+
+    final encoded = jsonEncode({
+      'kakaoJavascriptKey': _kakaoJavascriptKey.trim(),
+    });
+    await controller.runJavaScript(
+      'window.PlaceNoteConfig = Object.assign({}, '
+      'window.PlaceNoteConfig || {}, $encoded);',
     );
   }
 

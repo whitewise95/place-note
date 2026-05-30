@@ -37,17 +37,22 @@ _place_note_add_dart_define() {
   local key="$1"
   local value="$2"
 
-  if [[ -n "$value" && "$value" != \{*\} ]]; then
+  if [[ -n "$value" && "$value" != \{*\} && "$value" != *"발급받은"* && "$value" != *"등록한"* && "$value" != "JAVASCRIPT_키" ]]; then
     PLACE_NOTE_DART_DEFINES+=("--dart-define=${key}=${value}")
   fi
 }
 
 PLACE_NOTE_CONFIG_FILE="${PLACE_NOTE_CONFIG_FILE:-$PROJECT_DIR/config/app_config.local.yml}"
 KAKAO_REST_API_KEY_VALUE="${KAKAO_REST_API_KEY:-}"
+KAKAO_JAVASCRIPT_KEY_VALUE="${KAKAO_JAVASCRIPT_KEY:-}"
 PLACE_NOTE_WEB_APP_URL_VALUE="${PLACE_NOTE_WEB_APP_URL:-}"
 
 if [[ -z "$KAKAO_REST_API_KEY_VALUE" ]]; then
   KAKAO_REST_API_KEY_VALUE="$(_place_note_config_value "$PLACE_NOTE_CONFIG_FILE" "kakao_rest_api_key")"
+fi
+
+if [[ -z "$KAKAO_JAVASCRIPT_KEY_VALUE" ]]; then
+  KAKAO_JAVASCRIPT_KEY_VALUE="$(_place_note_config_value "$PLACE_NOTE_CONFIG_FILE" "kakao_javascript_key")"
 fi
 
 if [[ -z "$PLACE_NOTE_WEB_APP_URL_VALUE" ]]; then
@@ -55,4 +60,5 @@ if [[ -z "$PLACE_NOTE_WEB_APP_URL_VALUE" ]]; then
 fi
 
 _place_note_add_dart_define "KAKAO_REST_API_KEY" "$KAKAO_REST_API_KEY_VALUE"
+_place_note_add_dart_define "KAKAO_JAVASCRIPT_KEY" "$KAKAO_JAVASCRIPT_KEY_VALUE"
 _place_note_add_dart_define "PLACE_NOTE_WEB_APP_URL" "$PLACE_NOTE_WEB_APP_URL_VALUE"

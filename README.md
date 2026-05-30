@@ -53,16 +53,19 @@ scripts/run_android.sh
 
 ```yaml
 kakao_rest_api_key: "발급받은 REST API 키"
+kakao_javascript_key: "발급받은 JavaScript 키"
 place_note_web_app_url: "https://배포된-react-앱.vercel.app"
 ```
 
 - `kakao_rest_api_key`: 기존 Flutter 저장 흐름에서 주소를 확인하고 위치/지역을 저장할 때 사용하는 Local API 키입니다.
+- `kakao_javascript_key`: React WebView에서 카카오 지도를 표시할 때 사용하는 JavaScript 키입니다. 앱 실행 시 WebView에 주입됩니다.
 - `place_note_web_app_url`: 앱 안에서 띄울 배포된 React UI의 HTTPS 주소입니다.
 
 환경변수로 전달할 수도 있습니다.
 
 ```bash
 export KAKAO_REST_API_KEY="발급받은 REST API 키"
+export KAKAO_JAVASCRIPT_KEY="발급받은 JavaScript 키"
 export PLACE_NOTE_WEB_APP_URL="https://배포된-react-앱.vercel.app"
 scripts/run_android.sh
 ```

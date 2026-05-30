@@ -112,12 +112,24 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
       return;
     }
 
+    if (widget.returnToWebAfterSave) {
+      final reportId = await Navigator.of(context).push<String>(
+        MaterialPageRoute<String>(
+          builder: (_) => AddressCandidateScreen(
+            result: result,
+            returnToWebAfterSave: widget.returnToWebAfterSave,
+          ),
+        ),
+      );
+      if (mounted && reportId != null) {
+        Navigator.of(context).pop(reportId);
+      }
+      return;
+    }
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => AddressCandidateScreen(
-          result: result,
-          returnToWebAfterSave: widget.returnToWebAfterSave,
-        ),
+        builder: (_) => AddressCandidateScreen(result: result),
       ),
     );
   }

@@ -3,12 +3,23 @@ import { ArrowLeft, CalendarDays, MapPin } from 'lucide-react';
 import { KakaoMap } from '../maps/KakaoMap';
 import type { Report } from '../../types/native';
 
+declare global {
+  interface Window {
+    PlaceNoteConfig?: {
+      kakaoJavascriptKey?: string;
+    };
+  }
+}
+
 type ReportDetailProps = {
   report: Report;
   onBack: () => void;
 };
 
 export function ReportDetail({ report, onBack }: ReportDetailProps) {
+  const kakaoJavascriptKey =
+    window.PlaceNoteConfig?.kakaoJavascriptKey ?? import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY ?? '';
+
   return (
     <main className="app-shell detail-shell">
       <header className="detail-header">
@@ -41,7 +52,7 @@ export function ReportDetail({ report, onBack }: ReportDetailProps) {
             <span className="count-pill">Kakao Map</span>
           </div>
           <KakaoMap
-            apiKey={import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY ?? ''}
+            apiKey={kakaoJavascriptKey}
             latitude={report.latitude}
             longitude={report.longitude}
           />
