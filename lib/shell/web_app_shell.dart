@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -109,7 +110,13 @@ class _WebAppShellState extends State<WebAppShell> {
       return BridgeResponse.error(request.id, 'navigator_unavailable').toJson();
     }
 
-    navigator.pushNamed(CaptureScreen.routeName);
+    unawaited(
+      navigator.pushNamed(CaptureScreen.routeName).then((_) {
+        if (mounted) {
+          controller.reload();
+        }
+      }),
+    );
     return BridgeResponse.success(request.id, {'started': true}).toJson();
   }
 

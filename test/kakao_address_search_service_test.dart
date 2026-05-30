@@ -67,6 +67,71 @@ void main() {
     expect(resolved.locality, '흥인동');
   });
 
+  test('falls back to Kakao keyword search for selected place text', () async {
+    final requestedPaths = <String>[];
+    final service = KakaoAddressSearchService(
+      apiKey: 'test-key',
+      client: MockClient((request) async {
+        requestedPaths.add(request.url.path);
+        expect(request.url.host, 'dapi.kakao.com');
+        expect(request.url.queryParameters['query'], '연희숲속쉼터');
+        expect(request.headers['Authorization'], 'KakaoAK test-key');
+
+        if (request.url.path == '/v2/local/search/address.json') {
+          return http.Response.bytes(
+            utf8.encode('{"documents": []}'),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+
+        expect(request.url.path, '/v2/local/search/keyword.json');
+        return http.Response.bytes(
+          utf8.encode(
+            '''
+          {
+            "documents": [
+              {
+                "place_name": "연희숲속쉼터",
+                "address_name": "서울 서대문구 연희동 산5-79",
+                "road_address_name": "",
+                "x": "126.9301",
+                "y": "37.5742"
+              }
+            ]
+          }
+          ''',
+          ),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+
+    final resolved = await service.resolve(
+      const AddressCandidate(
+        id: 'candidate-1',
+        rawText: '연희숲속쉼터',
+        normalizedAddress: '연희숲속쉼터',
+        confidence: 80,
+      ),
+    );
+
+    expect(requestedPaths, [
+      '/v2/local/search/address.json',
+      '/v2/local/search/keyword.json',
+    ]);
+    expect(resolved, isNotNull);
+    expect(resolved!.normalizedAddress, '서울 서대문구 연희동 산5-79');
+    expect(resolved.detailAddress, '연희숲속쉼터');
+    expect(resolved.confidence, 90);
+    expect(resolved.latitude, 37.5742);
+    expect(resolved.longitude, 126.9301);
+    expect(resolved.province, '서울');
+    expect(resolved.district, '서대문구');
+    expect(resolved.locality, '연희동');
+  });
+
   test('returns null without API key', () async {
     var called = false;
     final service = KakaoAddressSearchService(

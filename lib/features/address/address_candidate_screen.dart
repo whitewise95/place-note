@@ -8,8 +8,10 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/folder_name_dialog.dart';
 import '../../core/widgets/section_title.dart';
 import '../../data/models/extraction_result.dart';
+import '../../data/models/research_report.dart';
 import '../../data/models/text_folder.dart';
 import '../../data/repositories/address_candidate_extractor.dart';
+import 'address_save_flow.dart';
 import '../report/report_screen.dart';
 
 class AddressCandidateScreen extends StatefulWidget {
@@ -63,13 +65,26 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
 
     setState(() => isCreating = true);
     final repository = RepositoryScope.of(context);
-    final resolvedCandidate = await repository.resolveAddress(candidate);
-    final report = await repository.createReport(
-      candidate: resolvedCandidate,
-      imagePath: widget.result.imagePath,
-      ocrText: widget.result.ocrText,
-      folderId: selectedFolderId,
-    );
+    late final ResearchReport report;
+    try {
+      report = await createAndSaveSelectedTextReport(
+        repository: repository,
+        candidate: candidate,
+        imagePath: widget.result.imagePath,
+        ocrText: widget.result.ocrText,
+        folderId: selectedFolderId,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => isCreating = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('저장에 실패했습니다. 잠시 뒤 다시 시도해주세요.')),
+      );
+      return;
+    }
 
     if (!mounted) {
       return;
@@ -77,7 +92,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => ReportScreen(report: report),
+        builder: (_) => ReportScreen(report: report, autosave: false),
       ),
     );
   }
