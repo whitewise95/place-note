@@ -1,5 +1,5 @@
 import { FolderOpen } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DotMark } from './components/DotMark';
 import { FolderEntries } from './features/folders/FolderEntries';
@@ -18,18 +18,23 @@ export function App({ bridge }: AppProps) {
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-  const loadArchive = () => {
+  const loadArchive = useCallback(() => {
     return Promise.all([bridge.listFolders(), bridge.listReports()]).then(
       ([loadedFolders, loadedReports]) => {
         setFolders(loadedFolders);
         setReports(loadedReports);
       },
     );
-  };
+  }, [bridge]);
 
   useEffect(() => {
     void loadArchive();
-  }, [bridge]);
+  }, [loadArchive]);
+
+  useEffect(() => {
+    window.addEventListener('place-note:archive-changed', loadArchive);
+    return () => window.removeEventListener('place-note:archive-changed', loadArchive);
+  }, [loadArchive]);
 
   const latestByFolder = useMemo(() => {
     return new Map(
@@ -98,7 +103,7 @@ export function App({ bridge }: AppProps) {
         aria-label="사진 속 글자 읽기"
         className="capture-fab"
         onClick={() => {
-          void bridge.startCapture().then(loadArchive);
+          void bridge.startCapture();
         }}
         title="사진 속 글자 읽기"
         type="button"

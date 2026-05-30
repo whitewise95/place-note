@@ -44,6 +44,11 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '연희숲속쉼터');
+    await tester.scrollUntilVisible(
+      find.text('폴더에 저장하기'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('폴더에 저장하기'));
     await tester.pumpAndSettle();
 

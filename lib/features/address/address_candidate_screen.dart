@@ -38,6 +38,7 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
   bool isCreating = false;
   bool isLoadingFolders = true;
   bool showOcrWords = false;
+  bool hasLoadedFolders = false;
 
   @override
   void initState() {
@@ -45,7 +46,15 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
     manualController = TextEditingController();
     ocrLines = _extractOcrLines(widget.result.ocrText);
     ocrWords = _extractOcrWords(widget.result.ocrText);
-    _loadFolders();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!hasLoadedFolders) {
+      hasLoadedFolders = true;
+      _loadFolders();
+    }
   }
 
   @override
@@ -583,7 +592,6 @@ class _OcrSelectionCard extends StatelessWidget {
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 240),
               child: Scrollbar(
-                thumbVisibility: true,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(right: 8, bottom: 2),
                   child: Wrap(

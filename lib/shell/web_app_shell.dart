@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -109,23 +110,34 @@ class _WebAppShellState extends State<WebAppShell> {
       return BridgeResponse.error(request.id, 'navigator_unavailable').toJson();
     }
 
-    final result = await navigator.pushNamed<String?>(
-      CaptureScreen.routeName,
-      arguments: const CaptureRouteOptions(returnToWebAfterSave: true),
+    unawaited(
+      navigator
+          .pushNamed<String?>(
+            CaptureScreen.routeName,
+            arguments: const CaptureRouteOptions(returnToWebAfterSave: true),
+          )
+          .then((result) {
+        if (mounted && result != null) {
+          return _emitArchiveChanged(result);
+        }
+        return null;
+      }),
     );
-    return BridgeResponse.success(
-      request.id,
-      {
-        'completed': result != null,
-        if (result != null) 'reportId': result,
-      },
-    ).toJson();
+    return BridgeResponse.success(request.id, {'started': true}).toJson();
   }
 
   Future<void> _emitResponse(Map<String, dynamic> response) async {
     final encoded = jsonEncode(response);
     await controller.runJavaScript(
       'window.dispatchEvent(new CustomEvent("place-note:native-response", '
+      '{ detail: $encoded }));',
+    );
+  }
+
+  Future<void> _emitArchiveChanged(String reportId) async {
+    final encoded = jsonEncode({'reportId': reportId});
+    await controller.runJavaScript(
+      'window.dispatchEvent(new CustomEvent("place-note:archive-changed", '
       '{ detail: $encoded }));',
     );
   }

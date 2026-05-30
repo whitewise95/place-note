@@ -34,7 +34,7 @@ describe('App', () => {
     await waitFor(() => expect(startCapture).toHaveBeenCalledTimes(1));
   });
 
-  it('reloads reports after the native capture flow completes', async () => {
+  it('reloads reports when Flutter reports archive changes', async () => {
     const bridge = new MockNativeBridge();
     const listReports = vi
       .spyOn(bridge, 'listReports')
@@ -54,6 +54,11 @@ describe('App', () => {
 
     expect(await screen.findByText('저장된 텍스트가 없습니다.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '사진 속 글자 읽기' }));
+    window.dispatchEvent(
+      new CustomEvent('place-note:archive-changed', {
+        detail: { reportId: 'report-new' },
+      }),
+    );
 
     expect(await screen.findByText('서울 서대문구 연희동 산5-79')).toBeInTheDocument();
     expect(listReports).toHaveBeenCalledTimes(2);
