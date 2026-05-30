@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
@@ -31,6 +31,31 @@ describe('App', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '사진 속 글자 읽기' }));
 
-    expect(startCapture).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(startCapture).toHaveBeenCalledTimes(1));
+  });
+
+  it('reloads reports after the native capture flow completes', async () => {
+    const bridge = new MockNativeBridge();
+    const listReports = vi
+      .spyOn(bridge, 'listReports')
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'report-new',
+          folderId: 'folder-inbox',
+          normalizedAddress: '서울 서대문구 연희동 산5-79',
+          createdAt: '2026-05-30T07:10:00.000Z',
+          latitude: 37.5742,
+          longitude: 126.9301,
+        },
+      ]);
+
+    render(<App bridge={bridge} />);
+
+    expect(await screen.findByText('저장된 텍스트가 없습니다.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '사진 속 글자 읽기' }));
+
+    expect(await screen.findByText('서울 서대문구 연희동 산5-79')).toBeInTheDocument();
+    expect(listReports).toHaveBeenCalledTimes(2);
   });
 });

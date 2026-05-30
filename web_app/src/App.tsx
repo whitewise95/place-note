@@ -18,13 +18,17 @@ export function App({ bridge }: AppProps) {
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
-  useEffect(() => {
-    Promise.all([bridge.listFolders(), bridge.listReports()]).then(
+  const loadArchive = () => {
+    return Promise.all([bridge.listFolders(), bridge.listReports()]).then(
       ([loadedFolders, loadedReports]) => {
         setFolders(loadedFolders);
         setReports(loadedReports);
       },
     );
+  };
+
+  useEffect(() => {
+    void loadArchive();
   }, [bridge]);
 
   const latestByFolder = useMemo(() => {
@@ -94,7 +98,7 @@ export function App({ bridge }: AppProps) {
         aria-label="사진 속 글자 읽기"
         className="capture-fab"
         onClick={() => {
-          void bridge.startCapture();
+          void bridge.startCapture().then(loadArchive);
         }}
         title="사진 속 글자 읽기"
         type="button"

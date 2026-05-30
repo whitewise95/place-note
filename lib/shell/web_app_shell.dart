@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -110,14 +109,17 @@ class _WebAppShellState extends State<WebAppShell> {
       return BridgeResponse.error(request.id, 'navigator_unavailable').toJson();
     }
 
-    unawaited(
-      navigator.pushNamed(CaptureScreen.routeName).then((_) {
-        if (mounted) {
-          controller.reload();
-        }
-      }),
+    final result = await navigator.pushNamed<String?>(
+      CaptureScreen.routeName,
+      arguments: const CaptureRouteOptions(returnToWebAfterSave: true),
     );
-    return BridgeResponse.success(request.id, {'started': true}).toJson();
+    return BridgeResponse.success(
+      request.id,
+      {
+        'completed': result != null,
+        if (result != null) 'reportId': result,
+      },
+    ).toJson();
   }
 
   Future<void> _emitResponse(Map<String, dynamic> response) async {
@@ -146,7 +148,15 @@ class _WebAppShellState extends State<WebAppShell> {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         routes: {
-          CaptureScreen.routeName: (_) => const CaptureScreen(),
+          CaptureScreen.routeName: (context) {
+            final arguments = ModalRoute.of(context)?.settings.arguments;
+            final options = arguments is CaptureRouteOptions
+                ? arguments
+                : const CaptureRouteOptions();
+            return CaptureScreen(
+              returnToWebAfterSave: options.returnToWebAfterSave,
+            );
+          },
         },
         home: Scaffold(
           body: SafeArea(

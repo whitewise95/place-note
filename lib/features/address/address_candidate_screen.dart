@@ -17,10 +17,12 @@ import '../report/report_screen.dart';
 class AddressCandidateScreen extends StatefulWidget {
   const AddressCandidateScreen({
     required this.result,
+    this.returnToWebAfterSave = false,
     super.key,
   });
 
   final ExtractionResult result;
+  final bool returnToWebAfterSave;
 
   @override
   State<AddressCandidateScreen> createState() => _AddressCandidateScreenState();
@@ -87,6 +89,11 @@ class _AddressCandidateScreenState extends State<AddressCandidateScreen> {
     }
 
     if (!mounted) {
+      return;
+    }
+
+    if (widget.returnToWebAfterSave) {
+      Navigator.of(context).pop(report.id);
       return;
     }
 

@@ -11,12 +11,25 @@ import '../../data/ocr/mock_ocr_service.dart';
 import '../extraction/extraction_screen.dart';
 
 class CaptureScreen extends StatefulWidget {
-  const CaptureScreen({super.key});
+  const CaptureScreen({
+    this.returnToWebAfterSave = false,
+    super.key,
+  });
 
   static const String routeName = '/capture';
 
+  final bool returnToWebAfterSave;
+
   @override
   State<CaptureScreen> createState() => _CaptureScreenState();
+}
+
+class CaptureRouteOptions {
+  const CaptureRouteOptions({
+    this.returnToWebAfterSave = false,
+  });
+
+  final bool returnToWebAfterSave;
 }
 
 class _CaptureScreenState extends State<CaptureScreen> {
@@ -60,7 +73,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
   void _startWith(String? path) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => ExtractionScreen(imagePath: path),
+        builder: (_) => ExtractionScreen(
+          imagePath: path,
+          returnToWebAfterSave: widget.returnToWebAfterSave,
+        ),
       ),
     );
   }

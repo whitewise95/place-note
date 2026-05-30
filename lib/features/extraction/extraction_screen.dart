@@ -7,15 +7,18 @@ import '../../data/models/extraction_result.dart';
 import '../../data/models/text_folder.dart';
 import '../../data/ocr/mock_ocr_service.dart';
 import '../address/address_candidate_screen.dart';
+import '../address/address_save_flow.dart';
 import '../report/report_screen.dart';
 
 class ExtractionScreen extends StatefulWidget {
   const ExtractionScreen({
     required this.imagePath,
+    this.returnToWebAfterSave = false,
     super.key,
   });
 
   final String? imagePath;
+  final bool returnToWebAfterSave;
 
   @override
   State<ExtractionScreen> createState() => _ExtractionScreenState();
@@ -69,7 +72,10 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
   void _startSample() {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => const ExtractionScreen(imagePath: MockOcrSource.sample),
+        builder: (_) => ExtractionScreen(
+          imagePath: MockOcrSource.sample,
+          returnToWebAfterSave: widget.returnToWebAfterSave,
+        ),
       ),
     );
   }
@@ -81,7 +87,8 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
 
     if (canAutoSelect) {
       final repository = RepositoryScope.of(context);
-      final report = await repository.createReport(
+      final report = await createAndSaveSelectedTextReport(
+        repository: repository,
         candidate: result.candidates.first,
         imagePath: result.imagePath,
         ocrText: result.ocrText,
@@ -92,9 +99,14 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
         return;
       }
 
+      if (widget.returnToWebAfterSave) {
+        Navigator.of(context).pop(report.id);
+        return;
+      }
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => ReportScreen(report: report),
+          builder: (_) => ReportScreen(report: report, autosave: false),
         ),
       );
       return;
@@ -102,7 +114,10 @@ class _ExtractionScreenState extends State<ExtractionScreen> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => AddressCandidateScreen(result: result),
+        builder: (_) => AddressCandidateScreen(
+          result: result,
+          returnToWebAfterSave: widget.returnToWebAfterSave,
+        ),
       ),
     );
   }
