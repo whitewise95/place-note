@@ -91,10 +91,12 @@ export function App({ bridge }: AppProps) {
       </section>
 
       <button
-        aria-label="사진 속 글자 읽기 준비 중"
+        aria-label="사진 속 글자 읽기"
         className="capture-fab"
-        disabled
-        title="사진 속 글자 읽기 준비 중"
+        onClick={() => {
+          void bridge.startCapture();
+        }}
+        title="사진 속 글자 읽기"
         type="button"
       >
         <DotMark size="large" />

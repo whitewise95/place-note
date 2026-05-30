@@ -3,18 +3,26 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../app.dart';
+import '../bridge/bridge_message.dart';
 import '../bridge/native_bridge_dispatcher.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/dot_mark.dart';
+import '../data/repositories/address_analysis_repository.dart';
+import '../data/repositories/local_address_analysis_repository.dart';
+import '../features/capture/capture_screen.dart';
 
 class WebAppShell extends StatefulWidget {
   WebAppShell({
     required this.webAppUri,
+    AddressAnalysisRepository? repository,
     NativeBridgeDispatcher? dispatcher,
     super.key,
-  }) : dispatcher = dispatcher ?? NativeBridgeDispatcher.local();
+  })  : repository = repository ?? LocalAddressAnalysisRepository(),
+        dispatcher = dispatcher ?? NativeBridgeDispatcher.local();
 
   final Uri webAppUri;
+  final AddressAnalysisRepository repository;
   final NativeBridgeDispatcher dispatcher;
 
   @override
@@ -22,6 +30,7 @@ class WebAppShell extends StatefulWidget {
 }
 
 class _WebAppShellState extends State<WebAppShell> {
+  final navigatorKey = GlobalKey<NavigatorState>();
   late final WebViewController controller;
   bool isLoading = true;
   bool hasLoadError = false;
@@ -73,7 +82,38 @@ class _WebAppShellState extends State<WebAppShell> {
   }
 
   Future<void> _onNativeMessage(JavaScriptMessage message) async {
+    final handledResponse = await _handleShellAction(message.message);
+    if (handledResponse != null) {
+      await _emitResponse(handledResponse);
+      return;
+    }
+
     final response = await widget.dispatcher.handle(message.message);
+    await _emitResponse(response);
+  }
+
+  Future<Map<String, dynamic>?> _handleShellAction(String rawMessage) async {
+    final BridgeRequest request;
+    try {
+      request = BridgeRequest.parse(rawMessage);
+    } catch (_) {
+      return null;
+    }
+
+    if (request.method != 'capture.start') {
+      return null;
+    }
+
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      return BridgeResponse.error(request.id, 'navigator_unavailable').toJson();
+    }
+
+    navigator.pushNamed(CaptureScreen.routeName);
+    return BridgeResponse.success(request.id, {'started': true}).toJson();
+  }
+
+  Future<void> _emitResponse(Map<String, dynamic> response) async {
     final encoded = jsonEncode(response);
     await controller.runJavaScript(
       'window.dispatchEvent(new CustomEvent("place-note:native-response", '
@@ -91,18 +131,25 @@ class _WebAppShellState extends State<WebAppShell> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Place Note',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      home: Scaffold(
-        body: SafeArea(
-          child: Stack(
-            children: [
-              if (!hasLoadError) WebViewWidget(controller: controller),
-              if (hasLoadError) _LoadErrorView(onRetry: _retry),
-              if (isLoading && !hasLoadError) const _LoadingView(),
-            ],
+    return RepositoryScope(
+      repository: widget.repository,
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        title: 'Place Note',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        routes: {
+          CaptureScreen.routeName: (_) => const CaptureScreen(),
+        },
+        home: Scaffold(
+          body: SafeArea(
+            child: Stack(
+              children: [
+                if (!hasLoadError) WebViewWidget(controller: controller),
+                if (hasLoadError) _LoadErrorView(onRetry: _retry),
+                if (isLoading && !hasLoadError) const _LoadingView(),
+              ],
+            ),
           ),
         ),
       ),

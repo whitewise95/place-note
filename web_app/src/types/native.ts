@@ -18,4 +18,5 @@ export type Report = {
 export interface NativeBridge {
   listFolders(): Promise<Folder[]>;
   listReports(): Promise<Report[]>;
+  startCapture(): Promise<void>;
 }

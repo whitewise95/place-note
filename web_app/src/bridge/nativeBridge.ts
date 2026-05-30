@@ -50,4 +50,8 @@ export class WebViewNativeBridge implements NativeBridge {
   listReports(): Promise<Report[]> {
     return this.request<Report[]>('reports.list');
   }
+
+  startCapture(): Promise<void> {
+    return this.request<void>('capture.start');
+  }
 }

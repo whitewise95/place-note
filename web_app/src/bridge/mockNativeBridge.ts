@@ -33,4 +33,8 @@ export class MockNativeBridge implements NativeBridge {
   async listReports(): Promise<Report[]> {
     return reports;
   }
+
+  async startCapture(): Promise<void> {
+    return undefined;
+  }
 }

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import { MockNativeBridge } from './bridge/mockNativeBridge';
@@ -22,5 +22,15 @@ describe('App', () => {
 
     expect(await screen.findByRole('heading', { name: '저장된 텍스트' })).toBeInTheDocument();
     expect(screen.getByText('서울 중구 퇴계로 409')).toBeInTheDocument();
+  });
+
+  it('starts the native capture flow from the floating action', async () => {
+    const bridge = new MockNativeBridge();
+    const startCapture = vi.spyOn(bridge, 'startCapture');
+    render(<App bridge={bridge} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '사진 속 글자 읽기' }));
+
+    expect(startCapture).toHaveBeenCalledTimes(1);
   });
 });
