@@ -1,4 +1,10 @@
-import type { Folder, NativeBridge, Report } from '../types/native';
+import type {
+  Folder,
+  NativeBridge,
+  OcrCaptureResult,
+  Report,
+  SaveReportParams,
+} from '../types/native';
 
 declare global {
   interface Window {
@@ -33,7 +39,7 @@ export class WebViewNativeBridge implements NativeBridge {
    *
    * id를 매칭하는 이유는 여러 요청이 동시에 날아가도 각 Promise가 자기 응답만 처리하게 하기 위해서입니다.
    */
-  private request<T>(method: string): Promise<T> {
+  private request<T>(method: string, params: Record<string, unknown> = {}): Promise<T> {
     const nativeChannel = window.PlaceNoteNative;
     if (!nativeChannel) {
       return Promise.reject(new Error('native_channel_unavailable'));
@@ -56,11 +62,7 @@ export class WebViewNativeBridge implements NativeBridge {
       };
 
       window.addEventListener('place-note:native-response', receive);
-      /**
-       * params는 아직 비어 있습니다. 추후 React에서 폴더 생성/삭제, 저장 요청 같은 쓰기 기능을
-       * 직접 맡게 되면 여기에 payload를 추가하면 됩니다.
-       */
-      nativeChannel.postMessage(JSON.stringify({ id, method, params: {} }));
+      nativeChannel.postMessage(JSON.stringify({ id, method, params }));
     });
   }
 
@@ -74,5 +76,13 @@ export class WebViewNativeBridge implements NativeBridge {
 
   startCapture(): Promise<void> {
     return this.request<void>('capture.start');
+  }
+
+  startOcrCapture(): Promise<OcrCaptureResult> {
+    return this.request<OcrCaptureResult>('capture.ocr', { source: 'gallery' });
+  }
+
+  saveReport(params: SaveReportParams): Promise<Report> {
+    return this.request<Report>('reports.save', params);
   }
 }

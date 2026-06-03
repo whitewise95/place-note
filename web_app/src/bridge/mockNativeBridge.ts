@@ -1,4 +1,10 @@
-import type { Folder, NativeBridge, Report } from '../types/native';
+import type {
+  Folder,
+  NativeBridge,
+  OcrCaptureResult,
+  Report,
+  SaveReportParams,
+} from '../types/native';
 
 /**
  * Vercel 또는 로컬 브라우저에서 React만 단독으로 볼 때 사용하는 샘플 데이터입니다.
@@ -12,7 +18,7 @@ const folders: Folder[] = [
   },
 ];
 
-const reports: Report[] = [
+let reports: Report[] = [
   {
     id: 'report-preview',
     folderId: 'folder-inbox',
@@ -52,5 +58,36 @@ export class MockNativeBridge implements NativeBridge {
    */
   async startCapture(): Promise<void> {
     return undefined;
+  }
+
+  /**
+   * React 단독 미리보기에서는 실제 사진첩/OCR을 열 수 없으므로,
+   * 대표적인 SNS 캡처에서 얻을 법한 OCR 결과를 고정으로 반환합니다.
+   */
+  async startOcrCapture(): Promise<OcrCaptureResult> {
+    return {
+      imagePath: '/mock/capture.jpg',
+      ocrText: '연희숲속쉼터\n서대문구 연희동 산5-79',
+      ocrLines: ['연희숲속쉼터', '서대문구 연희동 산5-79'],
+      ocrWords: ['연희숲속쉼터', '서대문구', '연희동', '산5-79'],
+    };
+  }
+
+  /**
+   * mock 저장은 메모리 배열만 갱신합니다. 새로고침하면 초기 샘플로 돌아가지만,
+   * 저장 화면과 홈 리프레시 UX를 브라우저에서도 검증할 수 있습니다.
+   */
+  async saveReport(params: SaveReportParams): Promise<Report> {
+    const report: Report = {
+      id: `report-${Date.now()}`,
+      folderId: params.folderId,
+      normalizedAddress: params.normalizedAddress,
+      rawAddress: params.selectedText,
+      createdAt: new Date().toISOString(),
+      latitude: params.latitude,
+      longitude: params.longitude,
+    };
+    reports = [report, ...reports];
+    return report;
   }
 }

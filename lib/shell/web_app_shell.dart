@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../app.dart';
@@ -34,6 +36,7 @@ class WebAppShell extends StatefulWidget {
 
 class _WebAppShellState extends State<WebAppShell> {
   final navigatorKey = GlobalKey<NavigatorState>();
+  final imagePicker = ImagePicker();
   late final WebViewController controller;
   bool isLoading = true;
   bool hasLoadError = false;
@@ -104,6 +107,10 @@ class _WebAppShellState extends State<WebAppShell> {
       return null;
     }
 
+    if (request.method == 'capture.ocr') {
+      return _handleOcrCapture(request);
+    }
+
     if (request.method != 'capture.start') {
       return null;
     }
@@ -127,6 +134,27 @@ class _WebAppShellState extends State<WebAppShell> {
       }),
     );
     return BridgeResponse.success(request.id, {'started': true}).toJson();
+  }
+
+  Future<Map<String, dynamic>> _handleOcrCapture(BridgeRequest request) async {
+    final pickedImage = await imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+      maxWidth: 1800,
+    );
+    if (pickedImage == null) {
+      return BridgeResponse.error(request.id, 'capture_cancelled').toJson();
+    }
+
+    final extraction =
+        await widget.repository.extractCandidates(pickedImage.path);
+    return BridgeResponse.success(request.id, {
+      'imagePath': pickedImage.path,
+      'imageDataUrl': await _readPickedImageAsDataUrl(pickedImage.path),
+      'ocrText': extraction.ocrText,
+      'ocrLines': _ocrLines(extraction.ocrText),
+      'ocrWords': _ocrWords(extraction.ocrText),
+    }).toJson();
   }
 
   Future<void> _emitResponse(Map<String, dynamic> response) async {
@@ -157,6 +185,34 @@ class _WebAppShellState extends State<WebAppShell> {
       'window.dispatchEvent(new CustomEvent("place-note:archive-changed", '
       '{ detail: $encoded }));',
     );
+  }
+
+  Future<String?> _readPickedImageAsDataUrl(String imagePath) async {
+    final file = File(imagePath);
+    if (!file.existsSync()) {
+      return null;
+    }
+
+    final bytes = await file.readAsBytes();
+    return 'data:image/jpeg;base64,${base64Encode(bytes)}';
+  }
+
+  List<String> _ocrLines(String text) {
+    return text
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _ocrWords(String text) {
+    return text
+        .split(RegExp(r'\s+'))
+        .map((word) => word.trim())
+        .where((word) => word.length >= 2)
+        .toSet()
+        .take(200)
+        .toList();
   }
 
   void _retry() {

@@ -2,17 +2,20 @@ import { FolderOpen } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DotMark } from './components/DotMark';
+import { CaptureSaveFlow } from './features/capture/CaptureSaveFlow';
 import { FolderEntries } from './features/folders/FolderEntries';
+import { searchKakaoAddress, type AddressSearch } from './features/maps/kakaoSearch';
 import { ReportDetail } from './features/reports/ReportDetail';
-import type { Folder, NativeBridge, Report } from './types/native';
+import type { Folder, NativeBridge, OcrCaptureResult, Report, SaveReportParams } from './types/native';
 import './theme/tokens.css';
 import './theme/global.css';
 
 type AppProps = {
   bridge: NativeBridge;
+  searchAddress?: AddressSearch;
 };
 
-export function App({ bridge }: AppProps) {
+export function App({ bridge, searchAddress = searchKakaoAddress }: AppProps) {
   /**
    * 현재 React 앱은 별도 라우터를 쓰지 않고, 간단한 화면 상태만으로 이동합니다.
    *
@@ -26,6 +29,8 @@ export function App({ bridge }: AppProps) {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [captureResult, setCaptureResult] = useState<OcrCaptureResult | null>(null);
+  const [captureError, setCaptureError] = useState<string | null>(null);
 
   /**
    * 로컬 저장소의 최신 상태를 Flutter 브릿지에서 다시 가져옵니다.
@@ -66,8 +71,42 @@ export function App({ bridge }: AppProps) {
     );
   }, [folders, reports]);
 
+  const startCaptureFlow = useCallback(async () => {
+    setCaptureError(null);
+    try {
+      const result = await bridge.startOcrCapture();
+      setCaptureResult(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message !== 'capture_cancelled') {
+        setCaptureError('사진 속 글자를 읽지 못했습니다. 다시 시도해주세요.');
+      }
+    }
+  }, [bridge]);
+
+  const saveCapturedReport = useCallback(
+    async (params: SaveReportParams) => {
+      await bridge.saveReport(params);
+      await loadArchive();
+      setCaptureResult(null);
+    },
+    [bridge, loadArchive],
+  );
+
   if (selectedReport) {
     return <ReportDetail onBack={() => setSelectedReport(null)} report={selectedReport} />;
+  }
+
+  if (captureResult) {
+    return (
+      <CaptureSaveFlow
+        capture={captureResult}
+        folders={folders}
+        onCancel={() => setCaptureResult(null)}
+        onSave={saveCapturedReport}
+        searchAddress={searchAddress}
+      />
+    );
   }
 
   if (selectedFolder) {
@@ -120,17 +159,12 @@ export function App({ bridge }: AppProps) {
         )}
       </section>
 
+      {captureError ? <p className="flow-error floating-error">{captureError}</p> : null}
+
       <button
         aria-label="사진 속 글자 읽기"
         className="capture-fab"
-        onClick={() => {
-          /**
-           * 실제 OCR/이미지 선택은 Flutter가 담당합니다.
-           * React는 "캡처를 시작해줘"라는 명령만 보내고, 저장 완료 후 archive-changed 이벤트로
-           * 목록을 새로고침합니다.
-           */
-          void bridge.startCapture();
-        }}
+        onClick={() => void startCaptureFlow()}
         title="사진 속 글자 읽기"
         type="button"
       >

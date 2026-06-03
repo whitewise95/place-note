@@ -50,6 +50,74 @@ void main() {
     expect(report['imageDataUrl'], 'data:image/jpeg;base64,aW1hZ2U=');
   });
 
+  test('dispatches reports.save with selected text and Kakao metadata',
+      () async {
+    ResearchReport? savedReport;
+    final dispatcher = NativeBridgeDispatcher(
+      loadFolders: () async => [TextFolder.inbox()],
+      loadReports: () async => savedReport == null ? [] : [savedReport!],
+      loadImageDataUrl: (_) async => 'data:image/jpeg;base64,aW1hZ2U=',
+      saveReportFromWeb: ({
+        required folderId,
+        required selectedText,
+        required normalizedAddress,
+        required imagePath,
+        required ocrText,
+        detailAddress,
+        latitude,
+        longitude,
+        province,
+        district,
+        locality,
+      }) async {
+        savedReport = ResearchReport(
+          id: 'report-saved',
+          rawAddress: selectedText,
+          normalizedAddress: normalizedAddress,
+          summaryCards: const [],
+          status: 'local_web',
+          createdAt: DateTime(2026, 6, 3, 10),
+          folderId: folderId,
+          imagePath: imagePath,
+          ocrText: ocrText,
+          detailAddress: detailAddress,
+          latitude: latitude,
+          longitude: longitude,
+          province: province,
+          district: district,
+          locality: locality,
+        );
+        return savedReport!;
+      },
+    );
+
+    final response = await dispatcher.handle(
+      '{"id":"4","method":"reports.save","params":{'
+      '"folderId":"folder-inbox",'
+      '"selectedText":"연희숲속쉼터",'
+      '"normalizedAddress":"서울 서대문구 연희동 산5-79",'
+      '"detailAddress":"연희숲속쉼터",'
+      '"latitude":37.5742,'
+      '"longitude":126.9301,'
+      '"province":"서울",'
+      '"district":"서대문구",'
+      '"locality":"연희동",'
+      '"imagePath":"/tmp/capture.jpg",'
+      '"ocrText":"연희숲속쉼터\\n서대문구 연희동 산5-79"'
+      '}}',
+    );
+    final report = response['result'] as Map<String, dynamic>;
+
+    expect(response['ok'], true);
+    expect(report['id'], 'report-saved');
+    expect(report['folderId'], TextFolder.inboxId);
+    expect(report['normalizedAddress'], '서울 서대문구 연희동 산5-79');
+    expect(report['rawAddress'], '연희숲속쉼터');
+    expect(report['latitude'], 37.5742);
+    expect(report['longitude'], 126.9301);
+    expect(report['imageDataUrl'], 'data:image/jpeg;base64,aW1hZ2U=');
+  });
+
   test('returns structured errors for unsupported and malformed messages',
       () async {
     final dispatcher = NativeBridgeDispatcher(

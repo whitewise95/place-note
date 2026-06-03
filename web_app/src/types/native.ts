@@ -33,6 +33,40 @@ export type Report = {
   imageDataUrl?: string;
 };
 
+export type OcrCaptureResult = {
+  imagePath?: string;
+  imageDataUrl?: string;
+  ocrText: string;
+  ocrLines: string[];
+  ocrWords: string[];
+};
+
+export type AddressSearchCandidate = {
+  id: string;
+  title: string;
+  normalizedAddress: string;
+  detailAddress?: string;
+  latitude: number;
+  longitude: number;
+  province?: string;
+  district?: string;
+  locality?: string;
+};
+
+export type SaveReportParams = {
+  folderId: string;
+  selectedText: string;
+  normalizedAddress: string;
+  detailAddress?: string;
+  latitude?: number;
+  longitude?: number;
+  province?: string;
+  district?: string;
+  locality?: string;
+  imagePath?: string;
+  ocrText: string;
+};
+
 /**
  * React가 Flutter와 대화하기 위해 기대하는 최소 기능입니다.
  * MockNativeBridge와 WebViewNativeBridge가 같은 인터페이스를 구현하므로,
@@ -42,4 +76,6 @@ export interface NativeBridge {
   listFolders(): Promise<Folder[]>;
   listReports(): Promise<Report[]>;
   startCapture(): Promise<void>;
+  startOcrCapture(): Promise<OcrCaptureResult>;
+  saveReport(params: SaveReportParams): Promise<Report>;
 }

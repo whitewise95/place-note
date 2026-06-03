@@ -1,6 +1,33 @@
 type KakaoPosition = object;
 
-type KakaoMapsApi = {
+export type KakaoAddressDocument = {
+  address_name: string;
+  x: string;
+  y: string;
+  address?: {
+    address_name?: string;
+    region_1depth_name?: string;
+    region_2depth_name?: string;
+    region_3depth_name?: string;
+  };
+  road_address?: {
+    address_name?: string;
+    region_1depth_name?: string;
+    region_2depth_name?: string;
+    region_3depth_name?: string;
+  };
+};
+
+export type KakaoPlaceDocument = {
+  id: string;
+  place_name: string;
+  address_name: string;
+  road_address_name?: string;
+  x: string;
+  y: string;
+};
+
+export type KakaoMapsApi = {
   load: (callback: () => void) => void;
   LatLng: new (latitude: number, longitude: number) => KakaoPosition;
   Map: new (
@@ -9,6 +36,25 @@ type KakaoMapsApi = {
   ) => object;
   Marker: new (options: { position: KakaoPosition }) => {
     setMap: (map: object) => void;
+  };
+  services: {
+    Status: {
+      OK: string;
+      ZERO_RESULT: string;
+      ERROR: string;
+    };
+    Geocoder: new () => {
+      addressSearch: (
+        query: string,
+        callback: (documents: KakaoAddressDocument[], status: string) => void,
+      ) => void;
+    };
+    Places: new () => {
+      keywordSearch: (
+        query: string,
+        callback: (documents: KakaoPlaceDocument[], status: string) => void,
+      ) => void;
+    };
   };
 };
 

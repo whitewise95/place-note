@@ -4,10 +4,12 @@ class BridgeRequest {
   const BridgeRequest({
     required this.id,
     required this.method,
+    this.params = const <String, dynamic>{},
   });
 
   final String id;
   final String method;
+  final Map<String, dynamic> params;
 
   factory BridgeRequest.parse(String rawMessage) {
     final decoded = jsonDecode(rawMessage);
@@ -24,7 +26,12 @@ class BridgeRequest {
       throw const FormatException('Request id and method are required.');
     }
 
-    return BridgeRequest(id: id, method: method);
+    final rawParams = decoded['params'];
+    return BridgeRequest(
+      id: id,
+      method: method,
+      params: rawParams is Map<String, dynamic> ? rawParams : const {},
+    );
   }
 }
 
