@@ -123,6 +123,8 @@ describe('App', () => {
     expect(searchAddress).toHaveBeenCalledWith('연희숲속쉼터');
 
     fireEvent.click(await screen.findByRole('button', { name: /서울 서대문구 연희동 산5-79/ }));
+    expect(screen.getByRole('region', { name: '선택 후보 지도' })).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: '선택 주소 저장' }));
 
     await waitFor(() => expect(bridge.saveReport).toHaveBeenCalledTimes(1));

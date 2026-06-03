@@ -627,3 +627,17 @@ button {
   font-size: 13px;
   line-height: 1.4;
 }
+
+.candidate-map-preview {
+  margin-top: 12px;
+}
+
+.candidate-map-preview .section-heading {
+  margin-bottom: 9px;
+}
+
+.candidate-map-preview .kakao-map-frame,
+.candidate-map-preview .map-notice,
+.candidate-map-preview .kakao-map {
+  height: 180px;
+}

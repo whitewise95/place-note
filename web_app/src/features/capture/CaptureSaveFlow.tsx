@@ -7,6 +7,7 @@ import type {
   OcrCaptureResult,
   SaveReportParams,
 } from '../../types/native';
+import { KakaoMap } from '../maps/KakaoMap';
 import type { AddressSearch } from '../maps/kakaoSearch';
 
 type CaptureSaveFlowProps = {
@@ -44,6 +45,8 @@ export function CaptureSaveFlow({
 
   const canSearch = selectedText.trim().length > 0 && status === 'idle';
   const canSave = selectedCandidate !== null && status === 'idle';
+  const kakaoJavascriptKey =
+    window.PlaceNoteConfig?.kakaoJavascriptKey ?? import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY ?? '';
 
   async function handleSearch() {
     if (!canSearch) {
@@ -198,6 +201,20 @@ export function CaptureSaveFlow({
               </button>
             ))}
           </div>
+        ) : null}
+
+        {selectedCandidate ? (
+          <section aria-label="선택 후보 지도" className="candidate-map-preview">
+            <div className="section-heading">
+              <h2>선택 위치</h2>
+              <span className="count-pill">Kakao Map</span>
+            </div>
+            <KakaoMap
+              apiKey={kakaoJavascriptKey}
+              latitude={selectedCandidate.latitude}
+              longitude={selectedCandidate.longitude}
+            />
+          </section>
         ) : null}
 
         <button className="save-action" disabled={!canSave} onClick={handleSave} type="button">
