@@ -13,11 +13,24 @@ type AppProps = {
 };
 
 export function App({ bridge }: AppProps) {
+  /**
+   * 현재 React 앱은 별도 라우터를 쓰지 않고, 간단한 화면 상태만으로 이동합니다.
+   *
+   * - selectedFolder === null && selectedReport === null: 홈/폴더 목록
+   * - selectedFolder !== null: 선택한 폴더의 저장 텍스트 목록
+   * - selectedReport !== null: 저장 텍스트 상세/지도 화면
+   *
+   * 모바일 WebView 안에서 화면 구조를 작게 유지하려고 react-router 대신 이 방식을 씁니다.
+   */
   const [folders, setFolders] = useState<Folder[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
+  /**
+   * 로컬 저장소의 최신 상태를 Flutter 브릿지에서 다시 가져옵니다.
+   * 폴더와 저장 텍스트는 서로 연결되어 있으므로 항상 같이 읽어 화면 상태를 맞춥니다.
+   */
   const loadArchive = useCallback(() => {
     return Promise.all([bridge.listFolders(), bridge.listReports()]).then(
       ([loadedFolders, loadedReports]) => {
@@ -31,11 +44,19 @@ export function App({ bridge }: AppProps) {
     void loadArchive();
   }, [loadArchive]);
 
+  /**
+   * Flutter에서 캡처/OCR/저장이 끝나면 WebView에 이 커스텀 이벤트를 쏩니다.
+   * React는 이벤트를 받는 즉시 로컬 저장소를 다시 읽어 방금 저장한 항목을 화면에 반영합니다.
+   */
   useEffect(() => {
     window.addEventListener('place-note:archive-changed', loadArchive);
     return () => window.removeEventListener('place-note:archive-changed', loadArchive);
   }, [loadArchive]);
 
+  /**
+   * 홈의 폴더 카드에는 각 폴더의 최신 저장 텍스트 한 줄만 보여줍니다.
+   * reports는 저장소에서 최신순으로 내려온다는 전제라, 같은 folderId의 첫 항목을 사용합니다.
+   */
   const latestByFolder = useMemo(() => {
     return new Map(
       folders.map((folder) => [
@@ -103,6 +124,11 @@ export function App({ bridge }: AppProps) {
         aria-label="사진 속 글자 읽기"
         className="capture-fab"
         onClick={() => {
+          /**
+           * 실제 OCR/이미지 선택은 Flutter가 담당합니다.
+           * React는 "캡처를 시작해줘"라는 명령만 보내고, 저장 완료 후 archive-changed 이벤트로
+           * 목록을 새로고침합니다.
+           */
           void bridge.startCapture();
         }}
         title="사진 속 글자 읽기"

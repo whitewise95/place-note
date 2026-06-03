@@ -25,6 +25,10 @@ export function FolderEntries({
 }: FolderEntriesProps) {
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLowerCase();
+  /**
+   * MVP 검색은 서버 없이 현재 폴더에 이미 로드된 텍스트만 대상으로 합니다.
+   * 나중에 OCR 원문, 태그, 지역 필터까지 붙이면 이 필터 조건을 확장하면 됩니다.
+   */
   const filteredReports = useMemo(
     () =>
       reports.filter((report) =>
@@ -69,6 +73,10 @@ export function FolderEntries({
               type="button"
             >
               {report.imageDataUrl ? (
+                /**
+                 * imageDataUrl은 Flutter가 로컬 이미지 파일을 base64 data URL로 변환해 전달합니다.
+                 * React는 실제 파일 경로를 알 필요 없이 img src로 바로 렌더링할 수 있습니다.
+                 */
                 <img alt="" className="report-thumbnail" src={report.imageDataUrl} />
               ) : (
                 <span aria-hidden className="report-placeholder" />

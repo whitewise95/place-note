@@ -2,6 +2,11 @@ import type { Folder, NativeBridge, Report } from '../types/native';
 
 declare global {
   interface Window {
+    /**
+     * Flutter WebView가 만들어주는 JavaScript channel입니다.
+     * React에서 postMessage로 요청을 보내면 Flutter가 로컬 저장소나 캡처 플로우를 실행한 뒤
+     * place-note:native-response 이벤트로 응답합니다.
+     */
     PlaceNoteNative?: {
       postMessage: (payload: string) => void;
     };
@@ -16,6 +21,18 @@ type ResponseEnvelope<T> = {
 };
 
 export class WebViewNativeBridge implements NativeBridge {
+  /**
+   * Flutter와 통신하는 공통 요청 함수입니다.
+   *
+   * 요청:
+   *   window.PlaceNoteNative.postMessage({ id, method, params })
+   *
+   * 응답:
+   *   Flutter가 window.dispatchEvent(new CustomEvent('place-note:native-response', ...))
+   *   형태로 같은 id를 돌려줍니다.
+   *
+   * id를 매칭하는 이유는 여러 요청이 동시에 날아가도 각 Promise가 자기 응답만 처리하게 하기 위해서입니다.
+   */
   private request<T>(method: string): Promise<T> {
     const nativeChannel = window.PlaceNoteNative;
     if (!nativeChannel) {
@@ -39,6 +56,10 @@ export class WebViewNativeBridge implements NativeBridge {
       };
 
       window.addEventListener('place-note:native-response', receive);
+      /**
+       * params는 아직 비어 있습니다. 추후 React에서 폴더 생성/삭제, 저장 요청 같은 쓰기 기능을
+       * 직접 맡게 되면 여기에 payload를 추가하면 됩니다.
+       */
       nativeChannel.postMessage(JSON.stringify({ id, method, params: {} }));
     });
   }
