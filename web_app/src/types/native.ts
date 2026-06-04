@@ -17,8 +17,13 @@ export type Folder = {
 export type Report = {
   id: string;
   folderId: string;
+  title?: string;
   normalizedAddress: string;
   rawAddress?: string;
+  memo?: string;
+  tags?: string[];
+  sourceImageUrl?: string | null;
+  storageType?: 'Local' | 'Cloud';
   createdAt: string;
   /**
    * latitude/longitude가 있으면 상세 화면에서 카카오맵을 보여줍니다.

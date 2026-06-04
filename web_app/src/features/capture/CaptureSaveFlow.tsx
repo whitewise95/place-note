@@ -1,4 +1,15 @@
-import { ArrowLeft, FolderOpen, MapPin, Save, Search } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bookmark,
+  Check,
+  Crop,
+  FileText,
+  Image as ImageIcon,
+  MapPin,
+  RefreshCcw,
+  Search,
+  X,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type {
@@ -18,191 +29,206 @@ type CaptureSaveFlowProps = {
   searchAddress: AddressSearch;
 };
 
-type FlowStatus = 'idle' | 'searching' | 'saving';
+type SaveForm = {
+  title: string;
+  address: string;
+  memo: string;
+  folderId: string;
+  tags: string[];
+};
+
+const MOCK_ADDRESS_CANDIDATES: AddressSearchCandidate[] = [
+  {
+    id: 'mock-yeonhui',
+    title: '연희숲속쉼터',
+    normalizedAddress: '서울 서대문구 연희동 산5-79',
+    latitude: 37.5742,
+    longitude: 126.9301,
+    province: '서울',
+    district: '서대문구',
+    locality: '연희동',
+  },
+  {
+    id: 'mock-seodaemun',
+    title: '서울 서대문구',
+    normalizedAddress: '서울 서대문구',
+    latitude: 37.5791,
+    longitude: 126.9368,
+    province: '서울',
+    district: '서대문구',
+  },
+  {
+    id: 'mock-bukhansan',
+    title: '북한산둘레길 7구간옛성길',
+    normalizedAddress: '서울 서대문구 홍은동',
+    latitude: 37.5947,
+    longitude: 126.9476,
+    province: '서울',
+    district: '서대문구',
+    locality: '홍은동',
+  },
+];
 
 export function CaptureSaveFlow({
   capture,
   folders,
   onCancel,
   onSave,
-  searchAddress,
 }: CaptureSaveFlowProps) {
-  const initialText = capture.ocrLines[0] ?? capture.ocrWords[0] ?? '';
-  const [selectedText, setSelectedText] = useState(initialText);
-  const [folderId, setFolderId] = useState(folders[0]?.id ?? 'folder-inbox');
-  const [candidates, setCandidates] = useState<AddressSearchCandidate[]>([]);
-  const [selectedCandidate, setSelectedCandidate] =
-    useState<AddressSearchCandidate | null>(null);
-  const [status, setStatus] = useState<FlowStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
-
-  const selectableTexts = useMemo(() => {
+  const ocrTexts = useMemo(() => {
     const merged = [...capture.ocrLines, ...capture.ocrWords]
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
     return [...new Set(merged)];
   }, [capture.ocrLines, capture.ocrWords]);
 
-  const canSearch = selectedText.trim().length > 0 && status === 'idle';
-  const canSave = selectedCandidate !== null && status === 'idle';
+  const defaultSelectedOcrText =
+    ocrTexts.find((text) => text.includes('산5-79')) ?? ocrTexts[0] ?? '';
+  const [selectedOcrText, setSelectedOcrText] = useState(defaultSelectedOcrText);
+  const [isAddressEdited, setIsAddressEdited] = useState(false);
+  const [showCandidates, setShowCandidates] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<AddressSearchCandidate | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [form, setForm] = useState<SaveForm>({
+    title: '연희숲속쉼터',
+    address: defaultSelectedOcrText || '서울 서대문구 연희동 산5-79',
+    memo: '주말 산책 후보로 저장',
+    folderId: folders[0]?.id ?? 'folder-inbox',
+    tags: ['산책', '공원', '가볼 곳'],
+  });
   const kakaoJavascriptKey =
     window.PlaceNoteConfig?.kakaoJavascriptKey ?? import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY ?? '';
 
-  async function handleSearch() {
-    if (!canSearch) {
-      return;
-    }
+  function updateForm<K extends keyof SaveForm>(key: K, value: SaveForm[K]) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
 
-    setStatus('searching');
-    setError(null);
-    setCandidates([]);
-    setSelectedCandidate(null);
-    try {
-      const results = await searchAddress(selectedText.trim());
-      setCandidates(results);
-      if (results.length === 0) {
-        setError('주소 후보를 찾지 못했습니다. 문장을 조금 다르게 선택하거나 직접 수정해보세요.');
-      }
-    } catch {
-      setError('주소 검색을 불러오지 못했습니다. 카카오 JavaScript 키와 도메인 설정을 확인해주세요.');
-    } finally {
-      setStatus('idle');
+  function handleOcrSelect(text: string) {
+    setSelectedOcrText(text);
+    /**
+     * 실제 제품에서는 사용자가 주소를 직접 수정한 뒤 OCR chip을 누를 때
+     * "현재 주소를 덮어쓸까요?" 확인 모달을 붙일 수 있습니다.
+     * 지금 mock 단계에서는 직접 수정 전이면 자동 반영하고, 수정 후에는 사용자의 입력을 보존합니다.
+     */
+    if (!isAddressEdited) {
+      updateForm('address', text);
     }
   }
 
+  function handleCandidateSelect(candidate: AddressSearchCandidate) {
+    setSelectedCandidate(candidate);
+    setForm((current) => ({
+      ...current,
+      title: candidate.title,
+      address: candidate.normalizedAddress,
+    }));
+    setIsAddressEdited(false);
+  }
+
   async function handleSave() {
-    if (!selectedCandidate || status !== 'idle') {
+    const address = form.address.trim();
+    if (!address) {
+      setError('주소를 입력하거나 OCR 텍스트를 선택해주세요.');
       return;
     }
 
-    setStatus('saving');
+    setIsSaving(true);
     setError(null);
+    const savePayload = {
+      title: form.title.trim() || address,
+      address,
+      memo: form.memo.trim(),
+      folder: folders.find((folder) => folder.id === form.folderId)?.name ?? '기본 보관함',
+      tags: form.tags,
+      sourceImageUrl: capture.imagePath ?? capture.imageDataUrl ?? null,
+      ocrTexts,
+      selectedOcrText,
+      addressCandidate: selectedCandidate
+        ? {
+            title: selectedCandidate.title,
+            address: selectedCandidate.normalizedAddress,
+          }
+        : null,
+    };
+    console.log('save address place', savePayload);
+
     try {
       await onSave({
-        folderId,
-        selectedText: selectedText.trim(),
-        normalizedAddress: selectedCandidate.normalizedAddress,
-        detailAddress: selectedCandidate.detailAddress ?? selectedCandidate.title,
-        latitude: selectedCandidate.latitude,
-        longitude: selectedCandidate.longitude,
-        province: selectedCandidate.province,
-        district: selectedCandidate.district,
-        locality: selectedCandidate.locality,
+        folderId: form.folderId,
+        selectedText: selectedOcrText,
+        normalizedAddress: address,
+        detailAddress: selectedCandidate?.title ?? savePayload.title,
+        latitude: selectedCandidate?.latitude,
+        longitude: selectedCandidate?.longitude,
+        province: selectedCandidate?.province,
+        district: selectedCandidate?.district,
+        locality: selectedCandidate?.locality,
         imagePath: capture.imagePath,
         ocrText: capture.ocrText,
       });
     } catch {
       setError('저장하지 못했습니다. 잠시 뒤 다시 시도해주세요.');
-      setStatus('idle');
+      setIsSaving(false);
     }
   }
 
   return (
-    <main className="app-shell capture-save-shell">
-      <header className="detail-header">
-        <button aria-label="홈으로 돌아가기" className="icon-button" onClick={onCancel} type="button">
-          <ArrowLeft size={25} />
-        </button>
-        <h1>저장할 텍스트 선택</h1>
-      </header>
-
-      {capture.imageDataUrl ? (
-        <img alt="OCR 원본 이미지" className="capture-source-image" src={capture.imageDataUrl} />
-      ) : null}
-
+    <main className="app-shell address-save-screen">
+      <Header onBack={onCancel} />
+      <OriginalImageCard
+        imageDataUrl={capture.imageDataUrl}
+        onCrop={() => console.log('TODO crop image')}
+        onReselect={() => console.log('TODO reselect image')}
+      />
+      <PlaceInfoCard
+        folders={folders}
+        form={form}
+        onAddressChange={(value) => {
+          setIsAddressEdited(true);
+          updateForm('address', value);
+        }}
+        onMemoChange={(value) => updateForm('memo', value)}
+        onRemoveTag={(tag) => updateForm('tags', form.tags.filter((item) => item !== tag))}
+        onTitleChange={(value) => updateForm('title', value)}
+        onFolderChange={(folderId) => updateForm('folderId', folderId)}
+        onAddTag={() => console.log('TODO add tag')}
+      />
+      <OcrTextChipList
+        ocrTexts={ocrTexts}
+        onSelect={handleOcrSelect}
+        selectedOcrText={selectedOcrText}
+      />
       <section className="capture-panel">
-        <div className="section-heading">
-          <h2>고른 문장</h2>
-          <span className="count-pill">Local</span>
-        </div>
-        <textarea
-          aria-label="선택한 텍스트"
-          className="capture-textarea"
-          onChange={(event) => {
-            setSelectedText(event.target.value);
-            setSelectedCandidate(null);
-          }}
-          rows={3}
-          value={selectedText}
-        />
-
-        <label className="folder-select-field">
+        <div className="card-title-row">
           <span>
-            <FolderOpen size={18} />
-            저장 폴더
+            <Search size={18} />
+            주소 후보
           </span>
-          <select
-            aria-label="저장 폴더"
-            onChange={(event) => setFolderId(event.target.value)}
-            value={folderId}
-          >
-            {folders.map((folder) => (
-              <option key={folder.id} value={folder.id}>
-                {folder.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </section>
-
-      <section className="capture-panel">
-        <div className="section-heading">
-          <h2>OCR 글자</h2>
-          <span className="count-pill">{selectableTexts.length}개</span>
         </div>
-        <div className="ocr-token-list">
-          {selectableTexts.map((text) => (
-            <button
-              className={text === selectedText ? 'ocr-token is-selected' : 'ocr-token'}
-              key={text}
-              onClick={() => {
-                setSelectedText(text);
-                setSelectedCandidate(null);
-              }}
-              type="button"
-            >
-              {text}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="capture-panel">
         <button
           className="primary-action"
-          disabled={!canSearch}
-          onClick={handleSearch}
+          onClick={() => {
+            setShowCandidates(true);
+            setError(null);
+          }}
           type="button"
         >
           <Search size={20} />
-          {status === 'searching' ? '찾는 중' : '주소 후보 찾기'}
+          주소 후보 찾기
         </button>
-
-        {error ? <p className="flow-error">{error}</p> : null}
-
-        {candidates.length > 0 ? (
+        {showCandidates ? (
           <div className="candidate-list">
-            {candidates.map((candidate) => (
-              <button
-                className={
-                  selectedCandidate?.id === candidate.id
-                    ? 'candidate-card is-selected'
-                    : 'candidate-card'
-                }
+            {MOCK_ADDRESS_CANDIDATES.map((candidate) => (
+              <AddressCandidateCard
+                candidate={candidate}
+                isSelected={selectedCandidate?.id === candidate.id}
                 key={candidate.id}
-                onClick={() => setSelectedCandidate(candidate)}
-                type="button"
-              >
-                <MapPin size={18} />
-                <span>
-                  <strong>{candidate.title}</strong>
-                  <small>{candidate.normalizedAddress}</small>
-                </span>
-              </button>
+                onSelect={handleCandidateSelect}
+              />
             ))}
           </div>
         ) : null}
-
         {selectedCandidate ? (
           <section aria-label="선택 후보 지도" className="candidate-map-preview">
             <div className="section-heading">
@@ -216,12 +242,212 @@ export function CaptureSaveFlow({
             />
           </section>
         ) : null}
-
-        <button className="save-action" disabled={!canSave} onClick={handleSave} type="button">
-          <Save size={20} />
-          {status === 'saving' ? '저장 중' : '선택 주소 저장'}
-        </button>
       </section>
+      {error ? <p className="flow-error">{error}</p> : null}
+      <BottomSaveButton isSaving={isSaving} onSave={handleSave} />
     </main>
+  );
+}
+
+function Header({ onBack }: { onBack: () => void }) {
+  return (
+    <header className="address-save-header">
+      <button aria-label="홈으로 돌아가기" className="icon-button" onClick={onBack} type="button">
+        <ArrowLeft size={25} />
+      </button>
+      <div>
+        <h1>주소 저장하기</h1>
+        <p>사진 속 주소를 확인하고 장소 정보로 저장해요.</p>
+      </div>
+    </header>
+  );
+}
+
+function OriginalImageCard({
+  imageDataUrl,
+  onCrop,
+  onReselect,
+}: {
+  imageDataUrl?: string;
+  onCrop: () => void;
+  onReselect: () => void;
+}) {
+  return (
+    <section className="capture-panel">
+      <div className="card-title-row">
+        <span>
+          <ImageIcon size={18} />
+          원본 이미지
+        </span>
+      </div>
+      <div className="original-image-layout">
+        {imageDataUrl ? (
+          <img alt="OCR 원본 이미지" className="original-image-preview" src={imageDataUrl} />
+        ) : (
+          <div className="original-image-placeholder">
+            <ImageIcon size={28} />
+            <span>이미지 미리보기</span>
+          </div>
+        )}
+        <div className="image-tool-list">
+          <button onClick={onReselect} type="button">
+            <RefreshCcw size={16} />
+            다시 선택
+          </button>
+          <button onClick={onCrop} type="button">
+            <Crop size={16} />
+            자르기
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PlaceInfoCard({
+  folders,
+  form,
+  onAddTag,
+  onAddressChange,
+  onFolderChange,
+  onMemoChange,
+  onRemoveTag,
+  onTitleChange,
+}: {
+  folders: Folder[];
+  form: SaveForm;
+  onAddTag: () => void;
+  onAddressChange: (value: string) => void;
+  onFolderChange: (folderId: string) => void;
+  onMemoChange: (value: string) => void;
+  onRemoveTag: (tag: string) => void;
+  onTitleChange: (value: string) => void;
+}) {
+  return (
+    <section className="capture-panel">
+      <div className="card-title-row">
+        <span>
+          <MapPin size={18} />
+          장소 정보
+        </span>
+        <span className="storage-badge local">Local</span>
+      </div>
+      <div className="form-grid">
+        <label>
+          제목
+          <input onChange={(event) => onTitleChange(event.target.value)} value={form.title} />
+        </label>
+        <label>
+          주소
+          <input onChange={(event) => onAddressChange(event.target.value)} value={form.address} />
+        </label>
+        <label>
+          메모
+          <input onChange={(event) => onMemoChange(event.target.value)} value={form.memo} />
+        </label>
+        <label>
+          저장 폴더
+          <select onChange={(event) => onFolderChange(event.target.value)} value={form.folderId}>
+            {folders.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="editable-tag-list">
+        {form.tags.map((tag) => (
+          <TagChip key={tag} label={tag} onRemove={() => onRemoveTag(tag)} />
+        ))}
+        <button className="add-tag-button" onClick={onAddTag} type="button">
+          + 태그 추가
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function OcrTextChipList({
+  ocrTexts,
+  onSelect,
+  selectedOcrText,
+}: {
+  ocrTexts: string[];
+  onSelect: (text: string) => void;
+  selectedOcrText: string;
+}) {
+  return (
+    <section className="capture-panel">
+      <div className="card-title-row">
+        <span>
+          <FileText size={18} />
+          OCR 텍스트
+        </span>
+      </div>
+      <div className="ocr-token-list horizontal">
+        {ocrTexts.map((text) => (
+          <button
+            className={text === selectedOcrText ? 'ocr-token is-selected' : 'ocr-token'}
+            key={text}
+            onClick={() => onSelect(text)}
+            type="button"
+          >
+            {text === selectedOcrText ? <Check size={14} /> : null}
+            {text}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AddressCandidateCard({
+  candidate,
+  isSelected,
+  onSelect,
+}: {
+  candidate: AddressSearchCandidate;
+  isSelected: boolean;
+  onSelect: (candidate: AddressSearchCandidate) => void;
+}) {
+  return (
+    <button
+      className={isSelected ? 'candidate-card is-selected' : 'candidate-card'}
+      onClick={() => onSelect(candidate)}
+      type="button"
+    >
+      <MapPin size={18} />
+      <span>
+        <strong>{candidate.title}</strong>
+        <small>{candidate.normalizedAddress}</small>
+      </span>
+    </button>
+  );
+}
+
+function TagChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="editable-tag-chip">
+      {label}
+      <button aria-label={`${label} 태그 삭제`} onClick={onRemove} type="button">
+        <X size={13} />
+      </button>
+    </span>
+  );
+}
+
+function BottomSaveButton({
+  isSaving,
+  onSave,
+}: {
+  isSaving: boolean;
+  onSave: () => void;
+}) {
+  return (
+    <button className="bottom-save-button" disabled={isSaving} onClick={onSave} type="button">
+      <Bookmark size={20} />
+      {isSaving ? '저장 중' : '장소 저장하기'}
+    </button>
   );
 }

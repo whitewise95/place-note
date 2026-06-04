@@ -22,7 +22,12 @@ let reports: Report[] = [
   {
     id: 'report-preview',
     folderId: 'folder-inbox',
+    title: '서울 중구 퇴계로 409',
     normalizedAddress: '서울 중구 퇴계로 409',
+    memo: '회의 장소 후보',
+    tags: ['회사', '미팅'],
+    sourceImageUrl: null,
+    storageType: 'Local',
     createdAt: '2026-05-25T12:49:00.000Z',
     latitude: 37.565,
     longitude: 127.009,
@@ -30,7 +35,12 @@ let reports: Report[] = [
   {
     id: 'report-second',
     folderId: 'folder-inbox',
+    title: '연희숲속쉼터',
     normalizedAddress: '서울 서대문구 연희동 산5-79',
+    memo: '주말 산책 후보로 저장',
+    tags: ['산책', '공원', '가볼 곳'],
+    sourceImageUrl: null,
+    storageType: 'Local',
     createdAt: '2026-05-24T11:10:00.000Z',
   },
 ];

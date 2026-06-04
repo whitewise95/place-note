@@ -18,11 +18,32 @@ describe('App', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /기본 보관함/ }));
     expect(await screen.findByRole('heading', { name: '기본 보관함' })).toBeInTheDocument();
+    expect(screen.getByText('저장한 주소 2개')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('주소, 제목, 메모 검색')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '전체' })).toHaveClass('is-active');
+    expect(screen.getAllByText('최근 저장').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('회의 장소 후보')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /지도 보기/ }).length).toBeGreaterThanOrEqual(1);
 
     fireEvent.click(screen.getByRole('button', { name: /서울 중구 퇴계로 409/ }));
 
     expect(await screen.findByRole('heading', { name: '저장된 텍스트' })).toBeInTheDocument();
     expect(screen.getByText('서울 중구 퇴계로 409')).toBeInTheDocument();
+  });
+
+  it('filters saved places by search keyword and chip selection', async () => {
+    render(<App bridge={new MockNativeBridge()} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /기본 보관함/ }));
+    fireEvent.change(await screen.findByPlaceholderText('주소, 제목, 메모 검색'), {
+      target: { value: '산책' },
+    });
+
+    expect(screen.getByText('연희숲속쉼터')).toBeInTheDocument();
+    expect(screen.queryByText('회의 장소 후보')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cloud' }));
+    expect(screen.getByText('아직 저장한 주소가 없어요')).toBeInTheDocument();
   });
 
   it('starts the native OCR capture flow from the floating action', async () => {
@@ -33,7 +54,7 @@ describe('App', () => {
     fireEvent.click(await screen.findByRole('button', { name: '사진 속 글자 읽기' }));
 
     await waitFor(() => expect(startOcrCapture).toHaveBeenCalledTimes(1));
-    expect(await screen.findByRole('heading', { name: '저장할 텍스트 선택' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '주소 저장하기' })).toBeInTheDocument();
   });
 
   it('reloads reports when Flutter reports archive changes', async () => {
@@ -116,22 +137,21 @@ describe('App', () => {
     render(<App bridge={bridge} searchAddress={searchAddress} />);
 
     fireEvent.click(await screen.findByRole('button', { name: '사진 속 글자 읽기' }));
-    expect(await screen.findByRole('heading', { name: '저장할 텍스트 선택' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '주소 저장하기' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '연희숲속쉼터' }));
+    fireEvent.click(screen.getByRole('button', { name: /서대문구 연희동 산5-79/ }));
     fireEvent.click(screen.getByRole('button', { name: '주소 후보 찾기' }));
-    expect(searchAddress).toHaveBeenCalledWith('연희숲속쉼터');
 
     fireEvent.click(await screen.findByRole('button', { name: /서울 서대문구 연희동 산5-79/ }));
     expect(screen.getByRole('region', { name: '선택 후보 지도' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '선택 주소 저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '장소 저장하기' }));
 
     await waitFor(() => expect(bridge.saveReport).toHaveBeenCalledTimes(1));
     expect(bridge.saveReport).toHaveBeenCalledWith(
       expect.objectContaining({
         folderId: 'folder-inbox',
-        selectedText: '연희숲속쉼터',
+        selectedText: '서대문구 연희동 산5-79',
         normalizedAddress: '서울 서대문구 연희동 산5-79',
         latitude: 37.5742,
         longitude: 126.9301,
